@@ -66,13 +66,13 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, List<String> details) {
-        ErrorResponse body = new ErrorResponse(
-                OffsetDateTime.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                message,
-                details
-        );
+        ErrorResponse body = ErrorResponse.builder()
+                .timestamp(OffsetDateTime.now())
+                .status(status.value())
+                .error(status.getReasonPhrase())
+                .message(message)
+                .details(details)
+                .build();
         return ResponseEntity.status(status).body(body);
     }
 }

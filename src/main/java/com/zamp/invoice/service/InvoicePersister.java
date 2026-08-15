@@ -40,18 +40,18 @@ public class InvoicePersister {
 
         List<LlmInvoiceResult.LlmLineItem> lineItems = result.getLineItems();
         if (lineItems != null) {
-            for (LlmInvoiceResult.LlmLineItem item : lineItems) {
-                InvoiceLineItem lineItem = InvoiceLineItem.builder()
-                        .id(UUID.randomUUID())
-                        .invoice(invoice)
-                        .lineNumber(item.getLineNumber())
-                        .description(item.getDescription())
-                        .quantity(item.getQuantity())
-                        .unitPrice(item.getUnitPrice())
-                        .amount(item.getAmount())
-                        .build();
-                invoiceLineItemRepository.save(lineItem);
-            }
+            List<InvoiceLineItem> entities = lineItems.stream()
+                    .map(item -> InvoiceLineItem.builder()
+                            .id(UUID.randomUUID())
+                            .invoice(invoice)
+                            .lineNumber(item.getLineNumber())
+                            .description(item.getDescription())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .amount(item.getAmount())
+                            .build())
+                    .toList();
+            invoiceLineItemRepository.saveAll(entities);
         }
     }
 

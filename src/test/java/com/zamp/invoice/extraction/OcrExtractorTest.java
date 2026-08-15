@@ -47,8 +47,8 @@ class OcrExtractorTest {
 
         ExtractionResult result = extractor.extract(imageBytes, "sample-invoice.png");
 
-        System.out.println("OCR raw text:\n" + result.rawText());
-        System.out.println("Word count: " + result.words().size());
-        assertThat(result.rawText()).isNotBlank();
+        System.out.println("OCR raw text:\n" + result.getRawText());
+        System.out.println("Word count: " + result.getWords().size());
+        assertThat(result.getRawText()).isNotBlank();
     }
 }

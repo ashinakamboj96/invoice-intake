@@ -1,13 +1,22 @@
 package com.zamp.invoice.exception;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public record ErrorResponse(
-        OffsetDateTime timestamp,
-        int status,
-        String error,
-        String message,
-        List<String> details
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ErrorResponse {
+
+    private OffsetDateTime timestamp;
+    private int status;
+    private String error;
+    private String message;
+    private List<String> details;
 }

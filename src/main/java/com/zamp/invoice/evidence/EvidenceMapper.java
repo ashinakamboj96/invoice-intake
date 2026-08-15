@@ -7,16 +7,20 @@ import com.zamp.invoice.extraction.OcrWord;
 import com.zamp.invoice.llm.LlmInvoiceResult;
 import com.zamp.invoice.repository.ExtractionEvidenceRepository;
 import com.zamp.invoice.repository.InvoiceRepository;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.springframework.stereotype.Component;
 
 import java.awt.Rectangle;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 public class EvidenceMapper {
@@ -34,8 +38,8 @@ public class EvidenceMapper {
                                          List<OcrWord> ocrWords,
                                          List<InvoiceLineItem> savedLineItems) {
         List<NormalizedWord> normalizedWords = ocrWords.stream()
-                .map(w -> new NormalizedWord(normalize(w.text()), w.confidence(), w.boundingBox()))
-                .collect(Collectors.toList());
+                .map(w -> new NormalizedWord(normalize(w.getText()), w.getConfidence(), w.getBoundingBox()))
+                .toList();
 
         List<ExtractionEvidence> evidence = new ArrayList<>();
         evidence.addAll(mapInvoiceLevelFields(invoiceId, llmResult, normalizedWords));
@@ -49,7 +53,12 @@ public class EvidenceMapper {
         return text.toLowerCase().replaceAll("[₹$€£¥,]", "").trim();
     }
 
-    private record NormalizedWord(String normalized, float confidence, Rectangle boundingBox) {
+    @Data
+    @AllArgsConstructor
+    private static class NormalizedWord {
+        private String normalized;
+        private float confidence;
+        private Rectangle boundingBox;
     }
 
     private List<ExtractionEvidence> mapInvoiceLevelFields(UUID invoiceId,
@@ -64,17 +73,19 @@ public class EvidenceMapper {
         fields.put(FieldName.TAX_AMOUNT, llmResult.getTaxAmount());
         fields.put(FieldName.TOTAL_AMOUNT, llmResult.getTotalAmount());
 
-        List<ExtractionEvidence> evidence = new ArrayList<>();
-        for (Map.Entry<FieldName, Object> entry : fields.entrySet()) {
-            if (entry.getValue() == null) {
-                continue;
-            }
-            BigDecimal confidence = matchInvoiceLevelValue(entry.getValue(), normalizedWords);
-            evidence.add(buildEvidence(invoiceId, null, entry.getKey(), confidence));
-        }
-        return evidence;
+        return fields.entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
+                .map(entry -> buildEvidence(invoiceId, null, entry.getKey(),
+                        matchInvoiceLevelValue(entry.getValue(), normalizedWords)))
+                .toList();
     }
 
+    /*
+     * Kept as an explicit loop rather than a stream: matchedBoxesForLineItem accumulates
+     * across iterations of the inner field loop, and each field's bounding-box disambiguation
+     * depends on the boxes matched by previously-processed fields for the same line item. That
+     * sequential, order-dependent mutation doesn't have a clean declarative stream equivalent.
+     */
     private List<ExtractionEvidence> mapLineItemFields(UUID invoiceId,
                                                          LlmInvoiceResult llmResult,
                                                          List<NormalizedWord> normalizedWords,
@@ -108,8 +119,8 @@ public class EvidenceMapper {
                 NormalizedWord chosen = matchLineItemValue(entry.getValue(), normalizedWords, matchedBoxesForLineItem);
                 BigDecimal confidence = null;
                 if (chosen != null) {
-                    confidence = toBigDecimal(chosen.confidence());
-                    matchedBoxesForLineItem.add(chosen.boundingBox());
+                    confidence = toBigDecimal(chosen.getConfidence());
+                    matchedBoxesForLineItem.add(chosen.getBoundingBox());
                 }
                 evidence.add(buildEvidence(invoiceId, savedLineItem.getId(), entry.getKey(), confidence));
             }
@@ -120,36 +131,23 @@ public class EvidenceMapper {
 
     private BigDecimal matchInvoiceLevelValue(Object value, List<NormalizedWord> normalizedWords) {
         String normalizedValue = normalize(fieldValueToString(value));
-        String[] tokens = normalizedValue.split("\\s+");
 
-        BigDecimal minConfidence = null;
-        for (String token : tokens) {
-            if (token.isBlank()) {
-                continue;
-            }
-            Float confidence = findBestMatch(token, normalizedWords);
-            if (confidence != null) {
-                BigDecimal candidate = toBigDecimal(confidence);
-                if (minConfidence == null || candidate.compareTo(minConfidence) < 0) {
-                    minConfidence = candidate;
-                }
-            }
-        }
-        return minConfidence;
+        return Arrays.stream(normalizedValue.split("\\s+"))
+                .filter(token -> !token.isBlank())
+                .map(token -> findBestMatch(token, normalizedWords))
+                .filter(Objects::nonNull)
+                .map(this::toBigDecimal)
+                .min(Comparator.naturalOrder())
+                .orElse(null);
     }
 
     private Float findBestMatch(String token, List<NormalizedWord> normalizedWords) {
-        for (NormalizedWord word : normalizedWords) {
-            if (word.normalized().equals(token)) {
-                return word.confidence();
-            }
-        }
-        for (NormalizedWord word : normalizedWords) {
-            if (word.normalized().contains(token)) {
-                return word.confidence();
-            }
-        }
-        return null;
+        return normalizedWords.stream()
+                .filter(w -> w.getNormalized().equals(token))
+                .findFirst()
+                .or(() -> normalizedWords.stream().filter(w -> w.getNormalized().contains(token)).findFirst())
+                .map(NormalizedWord::getConfidence)
+                .orElse(null);
     }
 
     private NormalizedWord matchLineItemValue(Object value,
@@ -158,8 +156,8 @@ public class EvidenceMapper {
         String token = normalize(fieldValueToString(value));
 
         List<NormalizedWord> candidates = normalizedWords.stream()
-                .filter(w -> w.normalized().equals(token) || w.normalized().contains(token))
-                .collect(Collectors.toList());
+                .filter(w -> w.getNormalized().equals(token) || w.getNormalized().contains(token))
+                .toList();
 
         if (candidates.isEmpty()) {
             return null;
@@ -168,18 +166,12 @@ public class EvidenceMapper {
             return candidates.get(0);
         }
 
-        NormalizedWord best = null;
-        int bestDistance = Integer.MAX_VALUE;
-        for (NormalizedWord candidate : candidates) {
-            for (Rectangle matchedBox : matchedBoxesForLineItem) {
-                int distance = Math.abs(candidate.boundingBox().y - matchedBox.y);
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    best = candidate;
-                }
-            }
-        }
-        return best;
+        return candidates.stream()
+                .min(Comparator.comparingInt(candidate -> matchedBoxesForLineItem.stream()
+                        .mapToInt(box -> Math.abs(candidate.getBoundingBox().y - box.y))
+                        .min()
+                        .orElse(Integer.MAX_VALUE)))
+                .orElse(null);
     }
 
     private String fieldValueToString(Object value) {

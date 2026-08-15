@@ -1,10 +1,17 @@
 package com.zamp.invoice.extraction;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.awt.Rectangle;
 
-public record OcrWord(
-        String text,
-        float confidence,
-        Rectangle boundingBox
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OcrWord {
+
+    private String text;
+    private float confidence;
+    private Rectangle boundingBox;
 }
