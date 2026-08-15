@@ -48,7 +48,8 @@ public class OcrExtractor {
                 List<Word> words = tesseract.getWords(page, ITessAPI.TessPageIteratorLevel.RIL_WORD);
                 boolean firstWordOnPage = true;
                 for (Word word : words) {
-                    allWords.add(new OcrWord(word.getText(), word.getConfidence(), word.getBoundingBox()));
+                    // Tess4J returns confidence on a 0–100 scale; normalize to 0–1 for storage and threshold checks
+                    allWords.add(new OcrWord(word.getText(), word.getConfidence() / 100f, word.getBoundingBox()));
                     if (!firstWordOnPage) {
                         rawText.append(' ');
                     }

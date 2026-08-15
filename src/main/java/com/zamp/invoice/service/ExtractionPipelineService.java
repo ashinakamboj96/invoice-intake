@@ -1,8 +1,11 @@
 package com.zamp.invoice.service;
 
+import com.zamp.invoice.domain.ExtractionEvidence;
 import com.zamp.invoice.domain.ExtractionMethod;
 import com.zamp.invoice.domain.Invoice;
+import com.zamp.invoice.domain.InvoiceLineItem;
 import com.zamp.invoice.domain.InvoiceStatus;
+import com.zamp.invoice.evidence.EvidenceMapper;
 import com.zamp.invoice.exception.InvoiceNotFoundException;
 import com.zamp.invoice.exception.LlmUnavailableException;
 import com.zamp.invoice.extraction.DocumentTypeDetector;
@@ -11,11 +14,13 @@ import com.zamp.invoice.extraction.OcrExtractor;
 import com.zamp.invoice.extraction.PdfTextExtractor;
 import com.zamp.invoice.llm.LlmInvoiceResult;
 import com.zamp.invoice.llm.LlmStructurer;
+import com.zamp.invoice.repository.InvoiceLineItemRepository;
 import com.zamp.invoice.repository.InvoiceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -23,24 +28,30 @@ import java.util.UUID;
 public class ExtractionPipelineService {
 
     private final InvoiceRepository invoiceRepository;
+    private final InvoiceLineItemRepository invoiceLineItemRepository;
     private final DocumentTypeDetector documentTypeDetector;
     private final PdfTextExtractor pdfTextExtractor;
     private final OcrExtractor ocrExtractor;
     private final LlmStructurer llmStructurer;
     private final InvoicePersister invoicePersister;
+    private final EvidenceMapper evidenceMapper;
 
     public ExtractionPipelineService(InvoiceRepository invoiceRepository,
+                                      InvoiceLineItemRepository invoiceLineItemRepository,
                                       DocumentTypeDetector documentTypeDetector,
                                       PdfTextExtractor pdfTextExtractor,
                                       OcrExtractor ocrExtractor,
                                       LlmStructurer llmStructurer,
-                                      InvoicePersister invoicePersister) {
+                                      InvoicePersister invoicePersister,
+                                      EvidenceMapper evidenceMapper) {
         this.invoiceRepository = invoiceRepository;
+        this.invoiceLineItemRepository = invoiceLineItemRepository;
         this.documentTypeDetector = documentTypeDetector;
         this.pdfTextExtractor = pdfTextExtractor;
         this.ocrExtractor = ocrExtractor;
         this.llmStructurer = llmStructurer;
         this.invoicePersister = invoicePersister;
+        this.evidenceMapper = evidenceMapper;
     }
 
     @Async("extractionTaskExecutor")
@@ -76,6 +87,12 @@ public class ExtractionPipelineService {
                 long llmDurationMs = System.currentTimeMillis() - llmStartedAt;
                 log.info("[invoiceId={}] LLM_STRUCTURING completed duration={}ms fields_extracted={}",
                         invoiceId, llmDurationMs, countExtractedFields(llmResult));
+
+                if (result.extractionMethod() == ExtractionMethod.OCR) {
+                    List<InvoiceLineItem> savedLineItems = invoiceLineItemRepository.findByInvoiceId(invoiceId);
+                    List<ExtractionEvidence> evidence = evidenceMapper.map(invoiceId, llmResult, result.words(), savedLineItems);
+                    log.info("[invoiceId={}] EVIDENCE_MAPPING matched={} fields", invoiceId, evidence.size());
+                }
             } catch (LlmUnavailableException e) {
                 log.error("[invoiceId={}] LLM_STRUCTURING failed reason={}", invoiceId, e.getMessage());
                 markFailed(invoiceId, "LLM structuring failed: " + e.getMessage());
