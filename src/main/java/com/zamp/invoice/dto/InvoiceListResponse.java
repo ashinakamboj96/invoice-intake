@@ -1,11 +1,20 @@
 package com.zamp.invoice.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
-public record InvoiceListResponse(
-        List<InvoiceListItem> items,
-        long totalCount,
-        int page,
-        int pageSize
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class InvoiceListResponse {
+
+    private List<InvoiceListItem> items;
+    private long totalCount;
+    private int page;
+    private int pageSize;
 }

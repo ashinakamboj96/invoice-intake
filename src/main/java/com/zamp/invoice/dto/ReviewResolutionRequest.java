@@ -2,12 +2,22 @@ package com.zamp.invoice.dto;
 
 import com.zamp.invoice.domain.ReviewActionType;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-public record ReviewResolutionRequest(
-        @NotNull UUID validationFailureId,
-        @NotNull ReviewActionType action,
-        String newValue
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ReviewResolutionRequest {
+
+    @NotNull
+    private UUID validationFailureId;
+
+    @NotNull
+    private ReviewActionType action;
+
+    private String newValue;
 }

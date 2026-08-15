@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/invoices/{id}/file")
+@RequestMapping("/invoices/{id}/file")
 public class FileController {
 
     private final InvoiceService invoiceService;

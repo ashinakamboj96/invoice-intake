@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/invoices/{id}/review")
+@RequestMapping("/invoices/{id}/review")
 public class ReviewController {
 
     private final ReviewService reviewService;
