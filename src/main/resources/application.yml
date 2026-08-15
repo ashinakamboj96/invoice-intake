@@ -28,6 +28,9 @@ validation:
   ocr-confidence-threshold: 0.90
   min-text-length: 50
 
+ocr:
+  tessdata-path: /opt/homebrew/share/tessdata
+
 async:
   core-pool-size: 2
   max-pool-size: 5
