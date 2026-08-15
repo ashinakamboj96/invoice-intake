@@ -4,7 +4,7 @@ import java.awt.Rectangle;
 
 public record OcrWord(
         String text,
-        double confidence,
+        float confidence,
         Rectangle boundingBox
 ) {
 }

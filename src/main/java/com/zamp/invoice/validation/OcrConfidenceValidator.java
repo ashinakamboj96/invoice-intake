@@ -1,6 +1,6 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.config.ValidationProperties;
+import com.zamp.invoice.config.ValidationConfig;
 import com.zamp.invoice.domain.ExtractionEvidence;
 import com.zamp.invoice.domain.Invoice;
 import com.zamp.invoice.domain.ValidationFailure;
@@ -11,10 +11,10 @@ import java.util.List;
 @Component
 public class OcrConfidenceValidator {
 
-    private final ValidationProperties validationProperties;
+    private final ValidationConfig validationConfig;
 
-    public OcrConfidenceValidator(ValidationProperties validationProperties) {
-        this.validationProperties = validationProperties;
+    public OcrConfidenceValidator(ValidationConfig validationConfig) {
+        this.validationConfig = validationConfig;
     }
 
     public List<ValidationFailure> validate(Invoice invoice, List<ExtractionEvidence> evidence) {
