@@ -3,8 +3,8 @@ spring:
     name: trusted-invoice-intake
   datasource:
     url: jdbc:postgresql://localhost:5432/invoice_intake
-    username: postgres
-    password: postgres
+    username: ashinakamboj
+    password:
   jpa:
     hibernate:
       ddl-auto: validate
