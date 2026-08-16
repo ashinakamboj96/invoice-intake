@@ -92,6 +92,28 @@ class EvidenceMapperTest {
     }
 
     @Test
+    void invoiceDateMatchesAgainstNonIsoSourceTextViaYearAndDay() {
+        // The LLM normalizes the date to ISO (2026-08-05) per the extraction prompt, but the
+        // source document writes it as "05 August 2026" — the whole ISO string never appears
+        // verbatim in the OCR text, only its year and day components do.
+        List<OcrWord> ocrWords = List.of(
+                new OcrWord("05", 0.88f, new Rectangle(0, 0, 10, 10)),
+                new OcrWord("August", 0.93f, new Rectangle(20, 0, 10, 10)),
+                new OcrWord("2026", 0.97f, new Rectangle(40, 0, 10, 10))
+        );
+        LlmInvoiceResult llmResult = LlmInvoiceResult.builder()
+                .invoiceDate("2026-08-05")
+                .build();
+
+        List<ExtractionEvidence> evidence = evidenceMapper.map(invoiceId, llmResult, ocrWords, List.of());
+
+        assertThat(evidence).hasSize(1);
+        assertThat(evidence.get(0).getFieldName()).isEqualTo(FieldName.INVOICE_DATE);
+        // Minimum confidence among the matched year/day tokens (month "08" has no OCR match).
+        assertThat(evidence.get(0).getOcrConfidence()).isEqualByComparingTo(new BigDecimal("0.88"));
+    }
+
+    @Test
     void lineItemFieldMatchedWithBoundingBoxDisambiguation() {
         UUID lineItemId = UUID.randomUUID();
         InvoiceLineItem savedLineItem = InvoiceLineItem.builder()

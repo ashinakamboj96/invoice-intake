@@ -45,6 +45,7 @@ public class InvoiceViewController {
                 status, vendor, invoiceNumber, currency, dateFrom, dateTo, amountMin, amountMax, page, size);
 
         model.addAttribute("invoices", result.getInvoices());
+        model.addAttribute("processingInvoices", invoiceService.listProcessingInvoices());
         model.addAttribute("totalElements", result.getTotalElements());
         model.addAttribute("totalPages", result.getTotalPages());
         model.addAttribute("currentPage", result.getCurrentPage());

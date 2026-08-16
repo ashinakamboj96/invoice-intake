@@ -120,8 +120,10 @@ class InvoiceServiceListTest {
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
         CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path<Object> statusPath = mock(Path.class);
         Path<String> vendorPath = mock(Path.class);
         Expression<String> loweredVendor = mock(Expression.class);
+        when(root.get("status")).thenReturn(statusPath);
         when(root.<String>get("vendorName")).thenReturn(vendorPath);
         when(cb.lower(vendorPath)).thenReturn(loweredVendor);
 
@@ -139,8 +141,10 @@ class InvoiceServiceListTest {
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
         CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path<Object> statusPath = mock(Path.class);
         Path<String> invoiceNumberPath = mock(Path.class);
         Expression<String> loweredInvoiceNumber = mock(Expression.class);
+        when(root.get("status")).thenReturn(statusPath);
         when(root.<String>get("invoiceNumber")).thenReturn(invoiceNumberPath);
         when(cb.lower(invoiceNumberPath)).thenReturn(loweredInvoiceNumber);
 
@@ -158,8 +162,10 @@ class InvoiceServiceListTest {
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
         CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path<Object> statusPath = mock(Path.class);
         Path<String> currencyPath = mock(Path.class);
         Expression<String> upperedCurrency = mock(Expression.class);
+        when(root.get("status")).thenReturn(statusPath);
         when(root.<String>get("currency")).thenReturn(currencyPath);
         when(cb.upper(currencyPath)).thenReturn(upperedCurrency);
 
@@ -179,7 +185,9 @@ class InvoiceServiceListTest {
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
         CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path<Object> statusPath = mock(Path.class);
         Path<LocalDate> datePath = mock(Path.class);
+        when(root.get("status")).thenReturn(statusPath);
         when(root.<LocalDate>get("invoiceDate")).thenReturn(datePath);
 
         spec.toPredicate(root, mock(CriteriaQuery.class), cb);
@@ -199,7 +207,9 @@ class InvoiceServiceListTest {
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
         CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path<Object> statusPath = mock(Path.class);
         Path<BigDecimal> amountPath = mock(Path.class);
+        when(root.get("status")).thenReturn(statusPath);
         when(root.<BigDecimal>get("totalAmount")).thenReturn(amountPath);
 
         spec.toPredicate(root, mock(CriteriaQuery.class), cb);
@@ -212,11 +222,24 @@ class InvoiceServiceListTest {
     void unresolvedFailureCountIsPopulatedPerInvoice() {
         Invoice invoice = sampleInvoice();
         stubFindAll(new PageImpl<>(List.of(invoice), Pageable.ofSize(20), 1));
-        when(validationFailureRepository.countByInvoiceIdAndResolvedFalse(invoice.getId())).thenReturn(3);
+        when(validationFailureRepository.countUnresolvedByInvoiceIdIn(List.of(invoice.getId())))
+                .thenReturn(List.of(unresolvedCount(invoice.getId(), 3)));
 
         InvoiceListResponse response = invoiceService.listInvoices(null, null, null, null, null, null, null, null, 0, 20);
 
         assertThat(response.getInvoices()).hasSize(1);
         assertThat(response.getInvoices().get(0).getUnresolvedFailureCount()).isEqualTo(3);
+    }
+
+    private ValidationFailureRepository.UnresolvedCount unresolvedCount(UUID invoiceId, long count) {
+        return new ValidationFailureRepository.UnresolvedCount() {
+            public UUID getInvoiceId() {
+                return invoiceId;
+            }
+
+            public long getFailureCount() {
+                return count;
+            }
+        };
     }
 }

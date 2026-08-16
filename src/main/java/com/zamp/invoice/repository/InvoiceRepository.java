@@ -31,4 +31,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID>, JpaSpec
     /** Every distinct currency actually present on an invoice, for the list page's currency filter — reflects real data rather than the full ISO 4217 set. */
     @Query("SELECT DISTINCT i.currency FROM Invoice i WHERE i.currency IS NOT NULL ORDER BY i.currency")
     List<String> findDistinctCurrencies();
+
+    /** Backs the list page's "Currently processing" widget — a live-status view, not a search result, so it's not paginated/filtered like the main table. */
+    List<Invoice> findTop10ByStatusOrderByUploadedAtDesc(InvoiceStatus status);
 }

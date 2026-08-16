@@ -102,18 +102,26 @@ public class ReviewService {
     /**
      * Verifies every currently-unresolved failure is covered by some resolution in the request,
      * and indexes them by id — one bulk fetch upfront so the rest of this flow looks failures up
-     * in memory instead of issuing a {@code findById} per resolution.
+     * in memory instead of issuing a {@code findById} per resolution. Skipped entirely when the
+     * request confirms a duplicate: that resolution alone rejects the invoice regardless of what
+     * else is outstanding (see {@link #handleDuplicateConfirmedIfPresent}), so requiring every
+     * other failure to be resolved first would just be busywork with no effect on the outcome.
      */
     private Map<UUID, ValidationFailure> requireAllCovered(List<ValidationFailure> unresolvedFailures,
                                                              List<CompleteReviewRequest.FailureResolution> resolutions) {
         Map<UUID, ValidationFailure> failuresById = unresolvedFailures.stream()
                 .collect(Collectors.toMap(ValidationFailure::getId, Function.identity()));
 
-        Set<UUID> resolutionIds = resolutions.stream()
-                .map(CompleteReviewRequest.FailureResolution::getFailureId)
-                .collect(Collectors.toSet());
-        if (!resolutionIds.containsAll(failuresById.keySet())) {
-            throw new InvalidReviewActionException("All unresolved failures must be resolved before completing review");
+        boolean confirmingDuplicate = resolutions.stream()
+                .anyMatch(r -> r.getAction() == ReviewActionType.DUPLICATE_CONFIRMED);
+
+        if (!confirmingDuplicate) {
+            Set<UUID> resolutionIds = resolutions.stream()
+                    .map(CompleteReviewRequest.FailureResolution::getFailureId)
+                    .collect(Collectors.toSet());
+            if (!resolutionIds.containsAll(failuresById.keySet())) {
+                throw new InvalidReviewActionException("All unresolved failures must be resolved before completing review");
+            }
         }
         return failuresById;
     }
@@ -208,23 +216,45 @@ public class ReviewService {
 
     private void applyCorrection(Invoice invoice, ValidationFailure failure, String newValue,
                                   Map<UUID, InvoiceLineItem> lineItemsById, Set<InvoiceLineItem> touchedLineItems) {
+        FieldName targetField = resolveCorrectionField(failure);
+        if (targetField == null) {
+            // EXACT_DUPLICATE and anything else with no implied field can only be resolved via
+            // APPROVED or DUPLICATE_DISMISSED, not CORRECTED.
+            return;
+        }
         try {
-            if (failure.getScope() == ValidationScope.INVOICE_FIELD && failure.getFieldName() != null) {
-                applyInvoiceFieldCorrection(invoice, failure.getFieldName(), newValue);
-            } else if (failure.getScope() == ValidationScope.LINE_ITEM && failure.getFieldName() != null) {
+            if (failure.getScope() == ValidationScope.LINE_ITEM) {
                 InvoiceLineItem item = lineItemsById.get(failure.getLineItemId());
                 if (item == null) {
                     throw new InvalidReviewActionException("Line item not found: " + failure.getLineItemId());
                 }
-                applyLineItemCorrection(item, failure.getFieldName(), newValue);
+                applyLineItemCorrection(item, targetField, newValue);
                 touchedLineItems.add(item);
+            } else {
+                applyInvoiceFieldCorrection(invoice, targetField, newValue);
             }
-            // INVOICE scope failures (TOTAL_RECONCILIATION, SUBTOTAL_MISMATCH, EXACT_DUPLICATE) and LINE_ITEM
-            // failures with no specific field (LINE_TOTAL_MISMATCH, MISSING_LINE_ITEM_AMOUNT) have no direct
-            // field to correct — they can only be resolved via APPROVED or DUPLICATE_DISMISSED.
         } catch (DateTimeParseException | NumberFormatException e) {
-            throw new InvalidReviewActionException("Invalid value '" + newValue + "' for field " + failure.getFieldName());
+            throw new InvalidReviewActionException("Invalid value '" + newValue + "' for field " + targetField);
         }
+    }
+
+    /**
+     * The field a correction applies to. Usually just {@code failure.getFieldName()}, but
+     * {@code SUBTOTAL_MISMATCH}, {@code TOTAL_RECONCILIATION}, {@code LINE_TOTAL_MISMATCH}, and
+     * {@code MISSING_LINE_ITEM_AMOUNT} are all fieldless (scope {@code INVOICE}/{@code LINE_ITEM}
+     * with no single field flagged) even though each unambiguously implicates one editable field —
+     * falls back to that implied field so these can be corrected too, not just approved.
+     */
+    private FieldName resolveCorrectionField(ValidationFailure failure) {
+        if (failure.getFieldName() != null) {
+            return failure.getFieldName();
+        }
+        return switch (failure.getRule()) {
+            case "SUBTOTAL_MISMATCH" -> FieldName.SUBTOTAL_AMOUNT;
+            case "TOTAL_RECONCILIATION" -> FieldName.TOTAL_AMOUNT;
+            case "LINE_TOTAL_MISMATCH", "MISSING_LINE_ITEM_AMOUNT" -> FieldName.AMOUNT;
+            default -> null;
+        };
     }
 
     private void applyInvoiceFieldCorrection(Invoice invoice, FieldName fieldName, String newValue) {

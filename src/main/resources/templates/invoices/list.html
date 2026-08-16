@@ -25,6 +25,30 @@
         <input type="file" id="file-input" class="d-none" accept=".pdf,.jpg,.jpeg,.png,.tiff">
     </div>
 
+    <div id="processing-section" class="mb-4" th:if="${not #lists.isEmpty(processingInvoices)}">
+        <h6 class="text-muted mb-2">
+            <i class="bi bi-hourglass-split me-1"></i>Currently processing
+            (<span id="processing-count" th:text="${#lists.size(processingInvoices)}">1</span>)
+        </h6>
+        <ul id="processing-list" class="list-group">
+            <li class="list-group-item d-flex align-items-center justify-content-between"
+                th:each="p : ${processingInvoices}"
+                th:id="'processing-item-' + ${p.id}"
+                th:attr="data-invoice-id=${p.id}">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                    <span th:text="${p.originalFilename ?: 'Untitled file'}">invoice.pdf</span>
+                </div>
+                <span class="text-muted small"
+                      th:text="'Uploaded ' + ${#temporals.format(p.uploadedAt, 'dd MMM yyyy, HH:mm')}">Uploaded 14 Mar 2026, 09:12</span>
+            </li>
+        </ul>
+        <div id="processing-done-banner" class="alert alert-info alert-dismissible fade show mt-2 d-none" role="alert">
+            Finished processing — <a href="#" onclick="window.location.reload(); return false;">refresh to view</a>.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+
     <form th:action="@{/}" method="get" class="card card-body bg-light mb-4">
         <div class="row g-3 align-items-end">
             <div class="col-md-2">
@@ -112,7 +136,7 @@
                 th:classappend="${invoice.status.name() == 'NEEDS_REVIEW'} ? 'table-warning'">
                 <td class="col-vendor" th:text="${invoice.vendorName ?: '—'}">Acme Supplies Inc.</td>
                 <td class="col-invoice-number" th:text="${invoice.invoiceNumber ?: '—'}">INV-123</td>
-                <td class="col-date" th:text="${invoice.invoiceDate ?: '—'}">2026-03-14</td>
+                <td class="col-date" th:text="${invoice.invoiceDate != null ? #temporals.format(invoice.invoiceDate, 'dd MMM yyyy') : '—'}">14 Mar 2026</td>
                 <td class="col-total" th:text="${invoice.totalAmount != null ? #numbers.formatDecimal(invoice.totalAmount, 1, 'COMMA', 2, 'POINT') : '—'}">297.00</td>
                 <td class="col-currency" th:text="${invoice.currency ?: '—'}">USD</td>
                 <td class="col-status">

@@ -1,6 +1,7 @@
 package com.zamp.invoice.model.dto;
 
 import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.enums.ReviewActionType;
 import com.zamp.invoice.model.entity.ValidationFailure;
 import com.zamp.invoice.enums.ValidationScope;
 import lombok.AllArgsConstructor;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-/** API projection of {@code ValidationFailure} — omits reviewer-internal fields like {@code action}/{@code newValue} that the client doesn't need to read back. */
+/** API projection of {@code ValidationFailure}. {@code action}/{@code newValue} are included (read-only) so the review-history UI can show what a reviewer actually did, not just the original failure message. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,6 +26,8 @@ public class ValidationFailureDto {
     private String message;
     private UUID relatedInvoiceId;
     private boolean resolved;
+    private ReviewActionType action;
+    private String newValue;
 
     /** Maps a {@code ValidationFailure} entity to its API projection. */
     public static ValidationFailureDto from(ValidationFailure failure) {
@@ -37,6 +40,8 @@ public class ValidationFailureDto {
                 .message(failure.getMessage())
                 .relatedInvoiceId(failure.getRelatedInvoice() != null ? failure.getRelatedInvoice().getId() : null)
                 .resolved(failure.isResolved())
+                .action(failure.getAction())
+                .newValue(failure.getNewValue())
                 .build();
     }
 }

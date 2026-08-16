@@ -95,7 +95,7 @@ public class EvidenceMapper {
         return fields.entrySet().stream()
                 .filter(entry -> entry.getValue() != null)
                 .map(entry -> buildEvidence(invoiceId, null, entry.getKey(),
-                        matchInvoiceLevelValue(entry.getValue(), normalizedWords)))
+                        matchInvoiceLevelValue(entry.getKey(), entry.getValue(), normalizedWords)))
                 .toList();
     }
 
@@ -148,10 +148,17 @@ public class EvidenceMapper {
         return evidence;
     }
 
-    private BigDecimal matchInvoiceLevelValue(Object value, List<NormalizedWord> normalizedWords) {
+    /**
+     * {@code INVOICE_DATE} is a special case: the LLM normalizes it to ISO ({@code 2026-08-05})
+     * per the extraction prompt, but the source document almost never writes it that way (e.g.
+     * "05 August 2026") — so it's also split on {@code -}, letting the year and day (which do
+     * appear verbatim as OCR tokens) match even though the whole ISO string never will.
+     */
+    private BigDecimal matchInvoiceLevelValue(FieldName fieldName, Object value, List<NormalizedWord> normalizedWords) {
         String normalizedValue = normalize(fieldValueToString(value));
+        String splitPattern = fieldName == FieldName.INVOICE_DATE ? "[\\s-]+" : "\\s+";
 
-        return Arrays.stream(normalizedValue.split("\\s+"))
+        return Arrays.stream(normalizedValue.split(splitPattern))
                 .filter(token -> !token.isBlank())
                 .map(token -> findBestMatch(token, normalizedWords))
                 .filter(Objects::nonNull)

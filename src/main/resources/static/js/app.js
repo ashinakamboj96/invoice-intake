@@ -126,6 +126,43 @@ async function uploadInvoice(file) {
     }, 3000);
 })();
 
+// Polls the "Currently processing" section's own items (separate from the main table, which no
+// longer renders PROCESSING invoices by default). On completion, removes the item from the list
+// rather than reloading — a completed invoice may not even match the main table's current filters,
+// so a forced reload could just as easily surprise the user as help them; a dismissible banner lets
+// them refresh on their own terms instead.
+(function initProcessingSectionPoller() {
+    const items = document.querySelectorAll('#processing-list > li[data-invoice-id]');
+    if (items.length === 0) {
+        return;
+    }
+    const pendingIds = new Set(Array.from(items).map((li) => li.dataset.invoiceId));
+
+    const interval = setInterval(async () => {
+        for (const id of Array.from(pendingIds)) {
+            try {
+                const response = await fetch(`/api/invoices/${id}`);
+                const invoice = await response.json();
+                if (invoice.status !== 'PROCESSING') {
+                    pendingIds.delete(id);
+                    const li = document.getElementById('processing-item-' + id);
+                    li?.remove();
+                    document.getElementById('processing-done-banner')?.classList.remove('d-none');
+                    const countEl = document.getElementById('processing-count');
+                    if (countEl) {
+                        countEl.textContent = String(document.querySelectorAll('#processing-list > li').length);
+                    }
+                }
+            } catch (err) {
+                // Transient network error — leave it pending and retry next tick.
+            }
+        }
+        if (pendingIds.size === 0) {
+            clearInterval(interval);
+        }
+    }, 3000);
+})();
+
 function updateInvoiceRow(invoiceId, invoice) {
     const row = document.getElementById('invoice-row-' + invoiceId);
     if (!row) {
@@ -137,7 +174,7 @@ function updateInvoiceRow(invoiceId, invoice) {
 
     setCellText(row, '.col-vendor', invoice.vendorName);
     setCellText(row, '.col-invoice-number', invoice.invoiceNumber);
-    setCellText(row, '.col-date', invoice.invoiceDate);
+    setCellText(row, '.col-date', invoice.invoiceDate ? formatDate(invoice.invoiceDate) : null);
     setCellText(row, '.col-total', invoice.totalAmount != null ? formatAmount(invoice.totalAmount) : null);
     setCellText(row, '.col-currency', invoice.currency);
 
@@ -168,6 +205,14 @@ function setCellText(row, selector, value) {
     if (cell) {
         cell.textContent = value ?? '—';
     }
+}
+
+// Matches the server-side "dd MMM yyyy" format (#temporals.format) so a row updated in place by
+// the poller doesn't flip back to the raw "yyyy-MM-dd" the JSON API returns.
+function formatDate(isoDate) {
+    const [year, month, day] = isoDate.split('-');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${day} ${months[parseInt(month, 10) - 1]} ${year}`;
 }
 
 function formatAmount(amount) {
@@ -266,8 +311,17 @@ function recordResolution(failureId, action, fieldName, lineItemId) {
                 return;
             }
         } else if (lineItemId) {
-            // Line item field — value comes from the card's own correction input.
-            newValue = document.getElementById('correction-' + failureId)?.value?.trim();
+            // Line item field — either the card's own correction input (specific-field failures),
+            // or, for fieldless failures like LINE_TOTAL_MISMATCH, the row's own Amount input above
+            // (the implied field the backend falls back to for these).
+            const inlineInput = document.getElementById('correction-' + failureId);
+            if (inlineInput) {
+                newValue = inlineInput.value?.trim();
+            } else {
+                const rowInput = document.querySelector(
+                    `input.line-item-field[data-line-item-id="${lineItemId}"][data-field="AMOUNT"]`);
+                newValue = rowInput?.value?.trim();
+            }
         }
     }
 
@@ -291,10 +345,38 @@ function recordResolution(failureId, action, fieldName, lineItemId) {
         card.querySelectorAll('button, input').forEach((el) => {
             el.disabled = true;
         });
+        const undoBtn = card.querySelector('.undo-resolution-btn');
+        if (undoBtn) {
+            undoBtn.disabled = false;
+        }
     }
 
     checkAllResolved();
 }
+
+// Lets a reviewer change their mind before submitting: clears the in-memory resolution and
+// re-enables the card's inputs/buttons. Nothing has been sent to the server yet at this point
+// (resolutions only go out on "Complete Review"), so this is a pure client-side undo.
+document.querySelectorAll('.undo-resolution-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        const failureId = btn.dataset.failureId;
+        delete resolutions[failureId];
+
+        document.getElementById('resolved-indicator-' + failureId)?.classList.add('d-none');
+
+        const card = document.getElementById('failure-' + failureId);
+        if (card) {
+            card.style.opacity = '';
+            card.style.borderLeftColor = '';
+            card.querySelectorAll('button, input').forEach((el) => {
+                el.disabled = false;
+            });
+            btn.disabled = true;
+        }
+
+        checkAllResolved();
+    });
+});
 
 function showFieldError(fieldName, message) {
     const input = document.getElementById('field-' + fieldName);
@@ -351,9 +433,12 @@ function checkAllResolved() {
         document.getElementById('failure-count')?.dataset.count ?? '0'
     );
     const resolvedCount = Object.keys(resolutions).length;
+    // Confirming a duplicate rejects the invoice outright regardless of any other open issue, so
+    // that decision alone is enough to enable submission — no need to also resolve everything else.
+    const duplicateConfirmed = Object.values(resolutions).some((r) => r.action === 'DUPLICATE_CONFIRMED');
     const submitBtn = document.getElementById('complete-review-btn');
     if (submitBtn) {
-        submitBtn.disabled = resolvedCount < totalFailures;
+        submitBtn.disabled = !duplicateConfirmed && resolvedCount < totalFailures;
     }
 }
 

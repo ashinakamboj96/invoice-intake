@@ -82,7 +82,7 @@
                     </div>
                     <div>
                         <div class="text-muted small">Date</div>
-                        <div class="fw-semibold" th:text="${invoice.invoiceDate ?: '—'}">2026-08-01</div>
+                        <div class="fw-semibold" th:text="${invoice.invoiceDate != null ? #temporals.format(invoice.invoiceDate, 'dd MMM yyyy') : '—'}">01 Aug 2026</div>
                     </div>
                     <div>
                         <div class="text-muted small">Currency</div>
@@ -147,6 +147,12 @@
                             <i class="bi bi-check-circle-fill text-success me-2"></i>
                             <span th:text="${failure.message}">Subtotal mismatch</span>
                             <span class="text-muted small ms-1">— <span th:text="${failure.rule}">SUBTOTAL_MISMATCH</span></span>
+                            <div class="small mt-1" th:switch="${failure.action != null ? failure.action.name() : ''}">
+                                <span th:case="'APPROVED'" class="text-success"><i class="bi bi-check2 me-1"></i>Accepted as correct</span>
+                                <span th:case="'CORRECTED'" class="text-warning-emphasis"><i class="bi bi-pencil me-1"></i>Corrected to "<span th:text="${failure.newValue}">5,400.00</span>"</span>
+                                <span th:case="'DUPLICATE_CONFIRMED'" class="text-danger"><i class="bi bi-x-circle me-1"></i>Confirmed as duplicate</span>
+                                <span th:case="'DUPLICATE_DISMISSED'" class="text-success"><i class="bi bi-check2 me-1"></i>Marked as not a duplicate</span>
+                            </div>
                         </li>
                     </ul>
                 </div>
@@ -465,8 +471,10 @@
                                 </div>
 
                                 <!-- Fieldless LINE_ITEM failures (e.g. LINE_TOTAL_MISMATCH, MISSING_LINE_ITEM_AMOUNT):
-                                     no single field to correct, but the row itself is editable above — link to it
-                                     rather than leaving "Looks correct" as the only, misleading option. -->
+                                     no single field is flagged, but the rule implies Amount, and the row itself is
+                                     editable above — link to it and let "Mark as fixed" pick up whatever value is
+                                     currently in that row's Amount input, rather than leaving "Looks correct" as
+                                     the only, misleading option. -->
                                 <div th:if="${!#strings.contains(failure.rule, 'DUPLICATE') and failure.scope.name() == 'LINE_ITEM' and failure.fieldName == null and failure.lineItemId != null}"
                                      class="d-flex gap-2 flex-wrap align-items-center">
                                     <a href="#" class="btn btn-sm btn-outline-secondary go-to-line-item-link"
@@ -478,10 +486,16 @@
                                             data-action="APPROVED">
                                         <i class="bi bi-check me-1"></i>Looks correct
                                     </button>
+                                    <button class="btn btn-sm btn-warning resolve-btn"
+                                            th:attr="data-failure-id=${failure.id},data-line-item-id=${failure.lineItemId}"
+                                            data-action="CORRECTED">
+                                        <i class="bi bi-pencil-check me-1"></i>Mark as fixed
+                                    </button>
                                 </div>
 
                                 <!-- SUBTOTAL_MISMATCH / TOTAL_RECONCILIATION: INVOICE-scope, but each clearly implicates
-                                     one header field — link to it rather than leaving "Looks correct" as the only option. -->
+                                     one header field — link to it, and let "Mark as fixed" pick up whatever value is
+                                     currently in that field, rather than leaving "Looks correct" as the only option. -->
                                 <div th:if="${!#strings.contains(failure.rule, 'DUPLICATE') and failure.scope.name() == 'INVOICE' and (failure.rule == 'SUBTOTAL_MISMATCH' or failure.rule == 'TOTAL_RECONCILIATION')}"
                                      class="d-flex gap-2 flex-wrap align-items-center">
                                     <a th:href="${failure.rule == 'SUBTOTAL_MISMATCH'} ? '#field-SUBTOTAL_AMOUNT' : '#field-TOTAL_AMOUNT'"
@@ -493,6 +507,11 @@
                                             th:attr="data-failure-id=${failure.id}"
                                             data-action="APPROVED">
                                         <i class="bi bi-check me-1"></i>Looks correct
+                                    </button>
+                                    <button class="btn btn-sm btn-warning resolve-btn"
+                                            th:attr="data-failure-id=${failure.id},data-field-name=${failure.rule == 'SUBTOTAL_MISMATCH' ? 'SUBTOTAL_AMOUNT' : 'TOTAL_AMOUNT'}"
+                                            data-action="CORRECTED">
+                                        <i class="bi bi-pencil-check me-1"></i>Mark as fixed
                                     </button>
                                 </div>
 
@@ -512,6 +531,11 @@
                                     <i class="bi bi-check-circle-fill me-1"></i>
                                     <span class="resolution-text">Marked as resolved</span>
                                 </span>
+                                <button class="btn btn-sm btn-link text-decoration-none undo-resolution-btn"
+                                        type="button" disabled
+                                        th:attr="data-failure-id=${failure.id}">
+                                    Undo
+                                </button>
                             </div>
                         </div>
                     </div>

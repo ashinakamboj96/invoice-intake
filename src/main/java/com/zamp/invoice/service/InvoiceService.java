@@ -24,11 +24,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.zamp.invoice.model.dto.InvoiceUploadResponse;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,8 +90,11 @@ public class InvoiceService {
                 .toList();
 
         List<ValidationFailure> allFailures = validationFailureRepository.findByInvoiceId(invoiceId);
+        // Duplicate failures surface first: confirming one is the only action that can end the
+        // review in a terminal (REJECTED) state, so it's the highest-priority decision on the screen.
         List<ValidationFailureDto> unresolvedFailures = allFailures.stream()
                 .filter(failure -> !failure.isResolved())
+                .sorted(Comparator.comparing((ValidationFailure failure) -> !failure.getRule().contains("DUPLICATE")))
                 .map(ValidationFailureDto::from)
                 .toList();
         List<ValidationFailureDto> resolvedFailures = allFailures.stream()
@@ -159,6 +165,11 @@ public class InvoiceService {
                                              int size) {
         Specification<Invoice> spec = Specification
                 .where(InvoiceSpecification.hasStatus(status))
+                // PROCESSING invoices have no extracted fields yet, so a default (unfiltered) view
+                // would otherwise be full of blank rows; they get their own "currently processing"
+                // widget instead (see listProcessingInvoices). An explicit status=PROCESSING filter
+                // still shows them here, matching what the filter literally asks for.
+                .and(status == null ? InvoiceSpecification.excludeStatus(InvoiceStatus.PROCESSING) : null)
                 .and(InvoiceSpecification.vendorContains(vendor))
                 .and(InvoiceSpecification.invoiceNumberContains(invoiceNumber))
                 .and(InvoiceSpecification.hasCurrency(currency))
@@ -169,9 +180,7 @@ public class InvoiceService {
 
         Page<Invoice> resultPage = invoiceRepository.findAll(spec, PageRequest.of(page, size, Sort.by("uploadedAt").descending()));
 
-        List<InvoiceListItem> items = resultPage.getContent().stream()
-                .map(this::toListItem)
-                .toList();
+        List<InvoiceListItem> items = toListItems(resultPage.getContent());
 
         return InvoiceListResponse.builder()
                 .invoices(items)
@@ -186,19 +195,37 @@ public class InvoiceService {
         return invoiceRepository.findDistinctCurrencies();
     }
 
-    private InvoiceListItem toListItem(Invoice invoice) {
-        int unresolvedFailureCount = validationFailureRepository.countByInvoiceIdAndResolvedFalse(invoice.getId());
+    /** The most recently uploaded still-processing invoices, for the list page's "currently processing" widget. */
+    public List<InvoiceUploadResponse> listProcessingInvoices() {
+        return invoiceRepository.findTop10ByStatusOrderByUploadedAtDesc(InvoiceStatus.PROCESSING).stream()
+                .map(invoice -> InvoiceUploadResponse.builder()
+                        .id(invoice.getId())
+                        .status(invoice.getStatus())
+                        .originalFilename(invoice.getOriginalFilename())
+                        .uploadedAt(invoice.getUploadedAt())
+                        .build())
+                .toList();
+    }
 
-        return InvoiceListItem.builder()
-                .id(invoice.getId())
-                .vendorName(invoice.getVendorName())
-                .invoiceNumber(invoice.getInvoiceNumber())
-                .invoiceDate(invoice.getInvoiceDate())
-                .totalAmount(invoice.getTotalAmount())
-                .currency(invoice.getCurrency())
-                .status(invoice.getStatus())
-                .uploadedAt(invoice.getUploadedAt())
-                .unresolvedFailureCount(unresolvedFailureCount)
-                .build();
+    /** Bulk-counts unresolved failures for a page of invoices in one query, instead of one query per row. */
+    private List<InvoiceListItem> toListItems(List<Invoice> invoices) {
+        List<UUID> invoiceIds = invoices.stream().map(Invoice::getId).toList();
+        Map<UUID, Long> unresolvedCounts = validationFailureRepository.countUnresolvedByInvoiceIdIn(invoiceIds).stream()
+                .collect(Collectors.toMap(ValidationFailureRepository.UnresolvedCount::getInvoiceId,
+                        ValidationFailureRepository.UnresolvedCount::getFailureCount));
+
+        return invoices.stream()
+                .map(invoice -> InvoiceListItem.builder()
+                        .id(invoice.getId())
+                        .vendorName(invoice.getVendorName())
+                        .invoiceNumber(invoice.getInvoiceNumber())
+                        .invoiceDate(invoice.getInvoiceDate())
+                        .totalAmount(invoice.getTotalAmount())
+                        .currency(invoice.getCurrency())
+                        .status(invoice.getStatus())
+                        .uploadedAt(invoice.getUploadedAt())
+                        .unresolvedFailureCount(unresolvedCounts.getOrDefault(invoice.getId(), 0L).intValue())
+                        .build())
+                .toList();
     }
 }

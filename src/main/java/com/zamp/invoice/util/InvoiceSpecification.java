@@ -23,6 +23,11 @@ public class InvoiceSpecification {
                 status == null ? null : cb.equal(root.get("status"), status);
     }
 
+    public static Specification<Invoice> excludeStatus(InvoiceStatus excluded) {
+        return (root, query, cb) ->
+                excluded == null ? null : cb.notEqual(root.get("status"), excluded);
+    }
+
     public static Specification<Invoice> vendorContains(String vendor) {
         return (root, query, cb) ->
                 vendor == null || vendor.isBlank() ? null :
