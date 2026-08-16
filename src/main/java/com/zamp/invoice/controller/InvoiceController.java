@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,9 +27,8 @@ import java.util.UUID;
 @RequestMapping("/invoices")
 public class InvoiceController {
 
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
-            "application/pdf", "image/jpeg", "image/png", "image/tiff"
-    );
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("application/pdf", "image/jpeg", "image/png", "image/tiff");
+    private static final int MAX_PAGE_SIZE = 100;
 
     private final InvoiceService invoiceService;
     private final ExtractionPipelineService extractionPipelineService;
@@ -67,8 +68,14 @@ public class InvoiceController {
     @GetMapping
     public ResponseEntity<InvoiceListResponse> listInvoices(
             @RequestParam(value = "status", required = false) InvoiceStatus status,
+            @RequestParam(value = "vendor", required = false) String vendor,
+            @RequestParam(value = "dateFrom", required = false) LocalDate dateFrom,
+            @RequestParam(value = "dateTo", required = false) LocalDate dateTo,
+            @RequestParam(value = "amountMin", required = false) BigDecimal amountMin,
+            @RequestParam(value = "amountMax", required = false) BigDecimal amountMax,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "pageSize", defaultValue = "20") int pageSize) {
-        return ResponseEntity.ok(invoiceService.listInvoices(status, page, pageSize));
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        int cappedSize = Math.min(size, MAX_PAGE_SIZE);
+        return ResponseEntity.ok(invoiceService.listInvoices(status, vendor, dateFrom, dateTo, amountMin, amountMax, page, cappedSize));
     }
 }

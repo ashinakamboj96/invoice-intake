@@ -282,20 +282,7 @@ public class ReviewService {
 
         return CompleteReviewResponse.builder()
                 .status(revalidatedInvoice.getStatus())
-                .newFailures(remainingFailures.stream().map(this::toDto).toList())
-                .build();
-    }
-
-    private ValidationFailureDto toDto(ValidationFailure failure) {
-        return ValidationFailureDto.builder()
-                .id(failure.getId())
-                .scope(failure.getScope())
-                .lineItemId(failure.getLineItemId())
-                .fieldName(failure.getFieldName())
-                .rule(failure.getRule())
-                .message(failure.getMessage())
-                .relatedInvoiceId(failure.getRelatedInvoice() != null ? failure.getRelatedInvoice().getId() : null)
-                .resolved(failure.isResolved())
+                .newFailures(remainingFailures.stream().map(ValidationFailureDto::from).toList())
                 .build();
     }
 }

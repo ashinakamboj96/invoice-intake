@@ -13,8 +13,8 @@ import java.util.List;
 @Builder
 public class InvoiceListResponse {
 
-    private List<InvoiceListItem> items;
-    private long totalCount;
-    private int page;
-    private int pageSize;
+    private List<InvoiceListItem> invoices;
+    private long totalElements;
+    private int totalPages;
+    private int currentPage;
 }

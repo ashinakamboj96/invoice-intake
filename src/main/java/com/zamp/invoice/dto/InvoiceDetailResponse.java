@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -20,10 +21,6 @@ import java.util.UUID;
 public class InvoiceDetailResponse {
 
     private UUID id;
-    private InvoiceStatus status;
-    private ExtractionMethod extractionMethod;
-    private String originalFilename;
-    private OffsetDateTime uploadedAt;
     private String vendorName;
     private String invoiceNumber;
     private LocalDate invoiceDate;
@@ -31,7 +28,16 @@ public class InvoiceDetailResponse {
     private BigDecimal subtotalAmount;
     private BigDecimal taxAmount;
     private BigDecimal totalAmount;
+    private InvoiceStatus status;
+    private ExtractionMethod extractionMethod;
+    private OffsetDateTime uploadedAt;
     private String failureMessage;
+
     private List<LineItemDto> lineItems;
-    private List<ValidationFailureDto> validationFailures;
+
+    private List<ValidationFailureDto> unresolvedFailures;
+    private List<ValidationFailureDto> resolvedFailures;
+
+    /** Field name to OCR confidence, invoice-level fields only; empty for PDF_TEXT invoices. */
+    private Map<String, Double> evidenceSummary;
 }

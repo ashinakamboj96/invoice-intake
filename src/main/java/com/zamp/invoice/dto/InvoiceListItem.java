@@ -22,6 +22,8 @@ public class InvoiceListItem {
     private String invoiceNumber;
     private LocalDate invoiceDate;
     private BigDecimal totalAmount;
+    private String currency;
     private InvoiceStatus status;
     private OffsetDateTime uploadedAt;
+    private int unresolvedFailureCount;
 }

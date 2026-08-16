@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface ExtractionEvidenceRepository extends JpaRepository<ExtractionEvidence, UUID> {
 
     List<ExtractionEvidence> findByInvoiceId(UUID invoiceId);
+
+    List<ExtractionEvidence> findByInvoiceIdAndLineItemIdIsNull(UUID invoiceId);
 }

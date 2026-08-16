@@ -1,0 +1,45 @@
+package com.zamp.invoice.repository;
+
+import com.zamp.invoice.domain.Invoice;
+import com.zamp.invoice.domain.InvoiceStatus;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+public class InvoiceSpecification {
+
+    private InvoiceSpecification() {
+    }
+
+    public static Specification<Invoice> hasStatus(InvoiceStatus status) {
+        return (root, query, cb) ->
+                status == null ? null : cb.equal(root.get("status"), status);
+    }
+
+    public static Specification<Invoice> vendorContains(String vendor) {
+        return (root, query, cb) ->
+                vendor == null ? null :
+                        cb.like(cb.lower(root.get("vendorName")), "%" + vendor.toLowerCase() + "%");
+    }
+
+    public static Specification<Invoice> dateFrom(LocalDate from) {
+        return (root, query, cb) ->
+                from == null ? null : cb.greaterThanOrEqualTo(root.get("invoiceDate"), from);
+    }
+
+    public static Specification<Invoice> dateTo(LocalDate to) {
+        return (root, query, cb) ->
+                to == null ? null : cb.lessThanOrEqualTo(root.get("invoiceDate"), to);
+    }
+
+    public static Specification<Invoice> amountMin(BigDecimal min) {
+        return (root, query, cb) ->
+                min == null ? null : cb.greaterThanOrEqualTo(root.get("totalAmount"), min);
+    }
+
+    public static Specification<Invoice> amountMax(BigDecimal max) {
+        return (root, query, cb) ->
+                max == null ? null : cb.lessThanOrEqualTo(root.get("totalAmount"), max);
+    }
+}
