@@ -8,7 +8,12 @@
 <body>
 <div layout:fragment="content">
 
-    <div id="upload-alerts" class="mb-3"></div>
+    <div id="upload-alerts" class="mb-3">
+        <div th:if="${param.uploaded}" class="alert alert-info alert-dismissible fade show" role="alert">
+            Invoice uploaded — processing… (ID: <span th:text="${param.uploaded[0]}"></span>)
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
 
     <div id="dropzone" class="upload-dropzone p-5 text-center mb-4">
         <i class="bi bi-cloud-arrow-up display-4 text-secondary"></i>
@@ -102,17 +107,19 @@
             </thead>
             <tbody>
             <tr th:each="invoice : ${invoices}"
+                th:id="'invoice-row-' + ${invoice.id}"
+                th:attr="data-invoice-id=${invoice.id},data-status=${invoice.status}"
                 th:classappend="${invoice.status.name() == 'NEEDS_REVIEW'} ? 'table-warning'">
-                <td th:text="${invoice.vendorName ?: '—'}">Acme Supplies Inc.</td>
-                <td th:text="${invoice.invoiceNumber ?: '—'}">INV-123</td>
-                <td th:text="${invoice.invoiceDate ?: '—'}">2026-03-14</td>
-                <td th:text="${invoice.totalAmount != null ? #numbers.formatDecimal(invoice.totalAmount, 1, 'COMMA', 2, 'POINT') : '—'}">297.00</td>
-                <td th:text="${invoice.currency ?: '—'}">USD</td>
-                <td>
+                <td class="col-vendor" th:text="${invoice.vendorName ?: '—'}">Acme Supplies Inc.</td>
+                <td class="col-invoice-number" th:text="${invoice.invoiceNumber ?: '—'}">INV-123</td>
+                <td class="col-date" th:text="${invoice.invoiceDate ?: '—'}">2026-03-14</td>
+                <td class="col-total" th:text="${invoice.totalAmount != null ? #numbers.formatDecimal(invoice.totalAmount, 1, 'COMMA', 2, 'POINT') : '—'}">297.00</td>
+                <td class="col-currency" th:text="${invoice.currency ?: '—'}">USD</td>
+                <td class="col-status">
                     <span class="badge" th:classappend="'status-badge-' + ${invoice.status}"
                           th:text="${invoice.status}">ACCEPTED</span>
                 </td>
-                <td>
+                <td class="col-issues">
                     <span th:if="${invoice.unresolvedFailureCount > 0}"
                           class="badge bg-warning text-dark"
                           th:text="${invoice.unresolvedFailureCount}">2</span>

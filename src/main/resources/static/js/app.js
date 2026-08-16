@@ -24,10 +24,6 @@ function showUploadError(message) {
     showAlert('danger', message);
 }
 
-function showProcessingBanner(invoiceId) {
-    showAlert('info', `Invoice uploaded — processing… (ID: ${invoiceId})`);
-}
-
 // Original dropzone markup, captured once at load so it can be restored after an upload error
 // without a full page reload (which would also wipe the error alert before it's readable).
 const dropzoneOriginalHtml = document.getElementById('dropzone')?.innerHTML ?? null;
@@ -88,24 +84,94 @@ async function uploadInvoice(file) {
         }
 
         const invoice = await response.json();
-        showProcessingBanner(invoice.id);
-        pollStatus(invoice.id);
+        // Reload once, immediately, so the new row appears in the table as PROCESSING.
+        // From there the general row poller (below) picks it up like any other in-flight
+        // invoice — no further reloads, so it can't race with the user clicking elsewhere.
+        window.location.href = '/?uploaded=' + encodeURIComponent(invoice.id);
     } catch (err) {
         setUploadLoading(false);
         showUploadError('Upload failed. Please try again.');
     }
 }
 
-function pollStatus(invoiceId) {
-    const interval = setInterval(async () => {
-        const response = await fetch(`/api/invoices/${invoiceId}`);
-        const invoice = await response.json();
+// Polls every currently-PROCESSING row on the list page and updates it in place once its
+// status changes — covers invoices still processing from an earlier visit, not just one just
+// uploaded in this tab, and never reloads the page (a full-page reload here previously raced
+// with in-progress navigation, e.g. clicking "View" on another row).
+(function initProcessingRowPoller() {
+    const pendingIds = new Set(
+        Array.from(document.querySelectorAll('tr[data-status="PROCESSING"]'))
+            .map((row) => row.dataset.invoiceId)
+    );
+    if (pendingIds.size === 0) {
+        return;
+    }
 
-        if (invoice.status !== 'PROCESSING') {
-            clearInterval(interval);
-            window.location.reload();
+    const interval = setInterval(async () => {
+        for (const id of Array.from(pendingIds)) {
+            try {
+                const response = await fetch(`/api/invoices/${id}`);
+                const invoice = await response.json();
+                if (invoice.status !== 'PROCESSING') {
+                    pendingIds.delete(id);
+                    updateInvoiceRow(id, invoice);
+                }
+            } catch (err) {
+                // Transient network error — leave it pending and retry next tick.
+            }
         }
-    }, 2000);
+        if (pendingIds.size === 0) {
+            clearInterval(interval);
+        }
+    }, 3000);
+})();
+
+function updateInvoiceRow(invoiceId, invoice) {
+    const row = document.getElementById('invoice-row-' + invoiceId);
+    if (!row) {
+        return;
+    }
+
+    row.dataset.status = invoice.status;
+    row.classList.toggle('table-warning', invoice.status === 'NEEDS_REVIEW');
+
+    setCellText(row, '.col-vendor', invoice.vendorName);
+    setCellText(row, '.col-invoice-number', invoice.invoiceNumber);
+    setCellText(row, '.col-date', invoice.invoiceDate);
+    setCellText(row, '.col-total', invoice.totalAmount != null ? formatAmount(invoice.totalAmount) : null);
+    setCellText(row, '.col-currency', invoice.currency);
+
+    const statusBadge = row.querySelector('.col-status .badge');
+    if (statusBadge) {
+        statusBadge.className = 'badge status-badge-' + invoice.status;
+        statusBadge.textContent = invoice.status;
+    }
+
+    const issuesCell = row.querySelector('.col-issues');
+    const unresolvedCount = invoice.unresolvedFailures ? invoice.unresolvedFailures.length : 0;
+    if (issuesCell) {
+        issuesCell.innerHTML = '';
+        const badge = document.createElement('span');
+        if (unresolvedCount > 0) {
+            badge.className = 'badge bg-warning text-dark';
+            badge.textContent = String(unresolvedCount);
+        } else {
+            badge.className = 'text-muted';
+            badge.textContent = '—';
+        }
+        issuesCell.appendChild(badge);
+    }
+}
+
+function setCellText(row, selector, value) {
+    const cell = row.querySelector(selector);
+    if (cell) {
+        cell.textContent = value ?? '—';
+    }
+}
+
+function formatAmount(amount) {
+    return Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function handleSelectedFile(file) {
@@ -218,10 +284,14 @@ function recordResolution(failureId, action, fieldName, lineItemId) {
     }
     indicator?.classList.remove('d-none');
 
-    document.querySelectorAll(`[data-failure-id="${failureId}"]`).forEach((el) => {
-        if (el.tagName === 'BUTTON') el.disabled = true;
-        if (el.tagName === 'INPUT') el.disabled = true;
-    });
+    const card = document.getElementById('failure-' + failureId);
+    if (card) {
+        card.style.opacity = '0.55';
+        card.style.borderLeftColor = '#198754';
+        card.querySelectorAll('button, input').forEach((el) => {
+            el.disabled = true;
+        });
+    }
 
     checkAllResolved();
 }

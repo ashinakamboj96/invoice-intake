@@ -42,6 +42,9 @@ public class InvoiceDetailResponse {
     /** Field name to OCR confidence, invoice-level fields only; empty for PDF_TEXT invoices. */
     private Map<String, Double> evidenceSummary;
 
+    /** Line item id to (field name to OCR confidence); empty for PDF_TEXT invoices. */
+    private Map<UUID, Map<String, Double>> lineItemEvidenceSummary;
+
     /** The invoice this one was confirmed a duplicate of; null unless {@code status} is {@code REJECTED}. */
     private UUID relatedInvoiceId;
 }

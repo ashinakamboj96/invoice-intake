@@ -13,7 +13,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /** Flags low-confidence and unmatched OCR evidence — the validator that turns {@code EvidenceMapper}'s output into reviewer-facing warnings. */
 @Component
@@ -33,7 +35,8 @@ public class OcrConfidenceValidator {
      *
      * @param invoice   the invoice being checked; only acted on when its extraction method is OCR
      * @param evidence  the OCR evidence rows collected for this invoice
-     * @param lineItems unused; kept so this method matches the shared validator call signature
+     * @param lineItems the invoice's line items, used only to name the line number in a
+     *                  line-item-scoped failure's message (e.g. "Line 3: ...")
      * @return one failure per low/missing-confidence evidence row; empty for non-OCR invoices
      *         or when every field met the threshold
      */
@@ -42,16 +45,21 @@ public class OcrConfidenceValidator {
             return List.of();
         }
 
+        Map<UUID, Integer> lineNumbersById = lineItems.stream()
+                .collect(Collectors.toMap(InvoiceLineItem::getId, InvoiceLineItem::getLineNumber));
+
         BigDecimal threshold = validationConfig.getOcrConfidenceThreshold();
         List<ValidationFailure> failures = new ArrayList<>();
 
         for (ExtractionEvidence row : evidence) {
+            Integer lineNumber = row.getLineItemId() == null ? null : lineNumbersById.get(row.getLineItemId());
+            String linePrefix = lineNumber == null ? "" : "Line " + lineNumber + ": ";
             BigDecimal confidence = row.getOcrConfidence();
             if (confidence == null) {
                 failures.add(buildFailure(invoice, row, "OCR_SOURCE_NOT_FOUND",
-                        "OCR source word could not be located for this field."));
+                        linePrefix + "OCR source word could not be located for this field."));
             } else if (confidence.compareTo(threshold) < 0) {
-                String message = "OCR confidence was " + toPercent(confidence) + "%, below the "
+                String message = linePrefix + "OCR confidence was " + toPercent(confidence) + "%, below the "
                         + toPercent(threshold) + "% review threshold.";
                 failures.add(buildFailure(invoice, row, "LOW_OCR_CONFIDENCE", message));
             }

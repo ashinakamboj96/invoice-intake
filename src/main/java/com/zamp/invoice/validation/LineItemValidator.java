@@ -43,8 +43,9 @@ public class LineItemValidator {
             if (quantity != null && unitPrice != null) {
                 BigDecimal expected = quantity.multiply(unitPrice);
                 if (expected.subtract(amount).abs().compareTo(TOLERANCE) > 0) {
-                    String message = quantity.toPlainString() + " × " + unitPrice.toPlainString() + " = "
-                            + expected.toPlainString() + ", but extracted amount is " + amount.toPlainString() + ".";
+                    String message = "Line " + lineItem.getLineNumber() + ": " + quantity.toPlainString() + " × "
+                            + unitPrice.toPlainString() + " = " + expected.toPlainString()
+                            + ", but extracted amount is " + amount.toPlainString() + ".";
                     failures.add(buildFailure(invoice, lineItem, "LINE_TOTAL_MISMATCH", message));
                 }
             }

@@ -4,7 +4,7 @@
 .status-badge-FAILED      { background-color: #dc3545; }
 .status-badge-REJECTED    { background-color: #6f42c1; }
 
-.failure-card { border-left: 4px solid #ffc107; }
+.failure-card { border-left: 4px solid #ffc107; transition: opacity 0.3s ease, border-left-color 0.3s ease; }
 .failure-card.resolved { border-left-color: #198754; opacity: 0.6; }
 .confidence-low { color: #dc3545; font-weight: 600; }
 .confidence-ok  { color: #198754; }

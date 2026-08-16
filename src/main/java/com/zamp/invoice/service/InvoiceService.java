@@ -1,5 +1,6 @@
 package com.zamp.invoice.service;
 
+import com.zamp.invoice.model.entity.ExtractionEvidence;
 import com.zamp.invoice.model.entity.Invoice;
 import com.zamp.invoice.model.entity.InvoiceLineItem;
 import com.zamp.invoice.enums.InvoiceStatus;
@@ -95,9 +96,16 @@ public class InvoiceService {
                 .map(ValidationFailureDto::from)
                 .toList();
 
-        Map<String, Double> evidenceSummary = extractionEvidenceRepository.findByInvoiceIdAndLineItemIdIsNull(invoiceId).stream()
-                .filter(evidence -> evidence.getOcrConfidence() != null)
+        List<ExtractionEvidence> allEvidence = extractionEvidenceRepository.findByInvoiceId(invoiceId);
+
+        Map<String, Double> evidenceSummary = allEvidence.stream()
+                .filter(evidence -> evidence.getLineItemId() == null && evidence.getOcrConfidence() != null)
                 .collect(Collectors.toMap(evidence -> evidence.getFieldName().name(), evidence -> evidence.getOcrConfidence().doubleValue()));
+
+        Map<UUID, Map<String, Double>> lineItemEvidenceSummary = allEvidence.stream()
+                .filter(evidence -> evidence.getLineItemId() != null && evidence.getOcrConfidence() != null)
+                .collect(Collectors.groupingBy(ExtractionEvidence::getLineItemId,
+                        Collectors.toMap(evidence -> evidence.getFieldName().name(), evidence -> evidence.getOcrConfidence().doubleValue())));
 
         UUID relatedInvoiceId = allFailures.stream()
                 .filter(failure -> failure.getAction() == ReviewActionType.DUPLICATE_CONFIRMED)
@@ -122,6 +130,7 @@ public class InvoiceService {
                 .unresolvedFailures(unresolvedFailures)
                 .resolvedFailures(resolvedFailures)
                 .evidenceSummary(evidenceSummary)
+                .lineItemEvidenceSummary(lineItemEvidenceSummary)
                 .relatedInvoiceId(relatedInvoiceId)
                 .build();
     }

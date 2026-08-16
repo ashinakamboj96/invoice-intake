@@ -11,8 +11,6 @@ import java.util.UUID;
 @Repository
 public interface ExtractionEvidenceRepository extends JpaRepository<ExtractionEvidence, UUID> {
 
+    /** Both invoice-level and line-item-level evidence; the caller partitions by {@code lineItemId} being null. */
     List<ExtractionEvidence> findByInvoiceId(UUID invoiceId);
-
-    /** Invoice-level evidence only (line-item rows have {@code lineItemId} set) — backs the detail page's field-confidence summary. */
-    List<ExtractionEvidence> findByInvoiceIdAndLineItemIdIsNull(UUID invoiceId);
 }
