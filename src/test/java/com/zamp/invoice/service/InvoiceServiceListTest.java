@@ -1,8 +1,8 @@
 package com.zamp.invoice.service;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.dto.InvoiceListResponse;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.model.dto.InvoiceListResponse;
 import com.zamp.invoice.repository.ExtractionEvidenceRepository;
 import com.zamp.invoice.repository.InvoiceLineItemRepository;
 import com.zamp.invoice.repository.InvoiceRepository;

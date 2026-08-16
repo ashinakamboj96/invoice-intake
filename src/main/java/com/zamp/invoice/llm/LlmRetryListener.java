@@ -6,6 +6,7 @@ import org.springframework.retry.RetryContext;
 import org.springframework.retry.RetryListener;
 import org.springframework.stereotype.Component;
 
+/** Logs each failed attempt of {@link LlmClient#complete}, wired in via {@code @Retryable(listeners = "llmRetryListener")}. */
 @Slf4j
 @Component
 public class LlmRetryListener implements RetryListener {

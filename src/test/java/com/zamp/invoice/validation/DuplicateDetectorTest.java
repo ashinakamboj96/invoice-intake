@@ -1,9 +1,9 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.domain.ReviewActionType;
-import com.zamp.invoice.domain.ValidationFailure;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.enums.ReviewActionType;
+import com.zamp.invoice.model.entity.ValidationFailure;
 import com.zamp.invoice.repository.InvoiceRepository;
 import com.zamp.invoice.repository.ValidationFailureRepository;
 import org.junit.jupiter.api.Test;

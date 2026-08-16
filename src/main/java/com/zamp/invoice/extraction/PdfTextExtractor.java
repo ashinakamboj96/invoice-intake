@@ -8,9 +8,15 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+/** Extracts a PDF's embedded text layer via PDFBox — no OCR, so this is only accurate for digital (non-scanned) PDFs. */
 @Component
 public class PdfTextExtractor {
 
+    /**
+     * @param fileBytes the PDF to read
+     * @return all pages' text concatenated, with a {@code --- PAGE n ---} marker between pages
+     * @throws ExtractionFailedException if the bytes aren't a parseable PDF
+     */
     public String extract(byte[] fileBytes) throws ExtractionFailedException {
         try (PDDocument document = Loader.loadPDF(fileBytes)) {
             PDFTextStripper stripper = new PDFTextStripper();

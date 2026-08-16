@@ -1,4 +1,4 @@
-package com.zamp.invoice.exception;
+package com.zamp.invoice.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+/** Uniform JSON error body returned by {@code GlobalExceptionHandler} for every failed request. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

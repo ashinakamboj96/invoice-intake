@@ -1,5 +1,7 @@
-package com.zamp.invoice.domain;
+package com.zamp.invoice.model.entity;
 
+import com.zamp.invoice.enums.ExtractionMethod;
+import com.zamp.invoice.enums.InvoiceStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,6 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * The central record: one uploaded invoice, its extracted fields, and its review status. The
+ * original file bytes live here too ({@link #originalFile}) rather than in an object store — see
+ * decisions.md for why. {@code vendorName} through {@code totalAmount} start null and are filled
+ * in by {@code LlmStructurer} once extraction completes; they stay null if the pipeline fails
+ * before structuring runs.
+ */
 @Entity
 @Table(name = "invoice")
 @Getter

@@ -1,7 +1,7 @@
-package com.zamp.invoice.dto;
+package com.zamp.invoice.model.dto;
 
-import com.zamp.invoice.domain.ExtractionMethod;
-import com.zamp.invoice.domain.InvoiceStatus;
+import com.zamp.invoice.enums.ExtractionMethod;
+import com.zamp.invoice.enums.InvoiceStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/** Full detail payload for {@code GET /api/invoices/{id}} and the HTML detail page: every field, line item, and failure a reviewer needs for one invoice. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

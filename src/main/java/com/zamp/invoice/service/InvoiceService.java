@@ -1,15 +1,15 @@
 package com.zamp.invoice.service;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.domain.ReviewActionType;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.dto.InvoiceDetailResponse;
-import com.zamp.invoice.dto.InvoiceListItem;
-import com.zamp.invoice.dto.InvoiceListResponse;
-import com.zamp.invoice.dto.LineItemDto;
-import com.zamp.invoice.dto.ValidationFailureDto;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.enums.ReviewActionType;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.model.dto.InvoiceDetailResponse;
+import com.zamp.invoice.model.dto.InvoiceListItem;
+import com.zamp.invoice.model.dto.InvoiceListResponse;
+import com.zamp.invoice.model.dto.LineItemDto;
+import com.zamp.invoice.model.dto.ValidationFailureDto;
 import com.zamp.invoice.exception.InvoiceNotFoundException;
 import com.zamp.invoice.repository.ExtractionEvidenceRepository;
 import com.zamp.invoice.repository.InvoiceLineItemRepository;
@@ -33,6 +33,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Read side of the invoice API: creating the initial record on upload, assembling the full
+ * detail view, and running the search/list query. Does not touch review state — see
+ * {@code ReviewService} for that.
+ */
 @Service
 public class InvoiceService {
 
@@ -51,6 +56,7 @@ public class InvoiceService {
         this.extractionEvidenceRepository = extractionEvidenceRepository;
     }
 
+    /** Persists a new {@code Invoice} in {@code PROCESSING} status from an uploaded file; extraction itself is kicked off separately by the caller. */
     public Invoice createInvoice(MultipartFile file) {
         byte[] bytes;
         try {
@@ -70,6 +76,7 @@ public class InvoiceService {
         return invoiceRepository.save(invoice);
     }
 
+    /** Assembles the full detail view for one invoice: fields, line items, resolved/unresolved failures, OCR confidence summary, and (for REJECTED invoices) the related duplicate. */
     public InvoiceDetailResponse getInvoice(UUID invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new InvoiceNotFoundException(invoiceId));
@@ -130,6 +137,7 @@ public class InvoiceService {
                 .build();
     }
 
+    /** Filters (any/all optional, unset ones simply don't restrict the query — see {@link InvoiceSpecification}), sorted newest-uploaded-first, and paginated. */
     public InvoiceListResponse listInvoices(InvoiceStatus status,
                                              String vendor,
                                              LocalDate dateFrom,

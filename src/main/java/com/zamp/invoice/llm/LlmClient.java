@@ -14,6 +14,12 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.util.List;
 
+/**
+ * Thin wrapper around the OpenAI chat completion API — the only class in the codebase that
+ * actually calls out to the LLM provider. Deliberately has no invoice-domain knowledge; it just
+ * sends a system/user message pair and returns the raw response text, retrying once via Spring
+ * Retry before giving up.
+ */
 @Slf4j
 @Component
 public class LlmClient {
@@ -26,6 +32,10 @@ public class LlmClient {
         this.openAiService = new OpenAiService(properties.getApiKey(), Duration.ofSeconds(properties.getTimeoutSeconds()));
     }
 
+    /**
+     * @return the raw text of the model's reply (expected to be JSON, but not parsed here)
+     * @throws LlmUnavailableException via {@link #recover} once both attempts have failed
+     */
     @Retryable(retryFor = RuntimeException.class, maxAttempts = 2, listeners = "llmRetryListener")
     public String complete(String systemPrompt, String userMessage) throws LlmUnavailableException {
         ChatCompletionRequest request = ChatCompletionRequest.builder()
@@ -37,6 +47,7 @@ public class LlmClient {
         return result.getChoices().get(0).getMessage().getContent();
     }
 
+    /** Invoked by Spring Retry once {@link #complete} has exhausted its attempts; converts the raw failure into our domain exception. */
     @Recover
     public String recover(RuntimeException e, String systemPrompt, String userMessage) {
         throw new LlmUnavailableException("OpenAI call failed after retries", e);

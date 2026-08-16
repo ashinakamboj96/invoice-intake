@@ -1,6 +1,6 @@
 package com.zamp.invoice.controller;
 
-import com.zamp.invoice.domain.Invoice;
+import com.zamp.invoice.model.entity.Invoice;
 import com.zamp.invoice.exception.InvoiceNotFoundException;
 import com.zamp.invoice.repository.InvoiceRepository;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Locale;
 import java.util.UUID;
 
+/** Serves an uploaded invoice's original file bytes — embedded in the review screen's iframe and linked from the accepted-invoice detail page. */
 @RestController
 public class FileController {
 

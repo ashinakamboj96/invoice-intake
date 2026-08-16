@@ -1,6 +1,6 @@
-package com.zamp.invoice.dto;
+package com.zamp.invoice.model.dto;
 
-import com.zamp.invoice.domain.InvoiceStatus;
+import com.zamp.invoice.enums.InvoiceStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+/** One row in the invoice list/search results — a summary projection, not the full invoice. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

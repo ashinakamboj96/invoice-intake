@@ -1,7 +1,7 @@
 package com.zamp.invoice.extraction;
 
 import com.zamp.invoice.config.ValidationConfig;
-import com.zamp.invoice.domain.ExtractionMethod;
+import com.zamp.invoice.enums.ExtractionMethod;
 import com.zamp.invoice.exception.ExtractionFailedException;
 import org.junit.jupiter.api.Test;
 

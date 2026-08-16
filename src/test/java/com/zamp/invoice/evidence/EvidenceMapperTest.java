@@ -1,11 +1,11 @@
 package com.zamp.invoice.evidence;
 
-import com.zamp.invoice.domain.ExtractionEvidence;
-import com.zamp.invoice.domain.FieldName;
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.extraction.OcrWord;
-import com.zamp.invoice.llm.LlmInvoiceResult;
+import com.zamp.invoice.model.entity.ExtractionEvidence;
+import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.model.extraction.OcrWord;
+import com.zamp.invoice.model.llm.LlmInvoiceResult;
 import com.zamp.invoice.repository.ExtractionEvidenceRepository;
 import com.zamp.invoice.repository.InvoiceRepository;
 import org.junit.jupiter.api.BeforeEach;

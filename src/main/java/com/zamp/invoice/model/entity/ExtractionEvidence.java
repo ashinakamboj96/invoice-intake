@@ -1,5 +1,6 @@
-package com.zamp.invoice.domain;
+package com.zamp.invoice.model.entity;
 
+import com.zamp.invoice.enums.FieldName;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,6 +23,12 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
+ * Links one extracted field (invoice-level or line-item) back to the OCR confidence score of the
+ * word(s) it was read from, produced by {@code EvidenceMapper}. A row with a null
+ * {@code ocrConfidence} means no matching OCR word could be found at all (surfaced as an
+ * {@code OCR_SOURCE_NOT_FOUND} failure), which is a different, more concerning signal than a
+ * matched-but-low-confidence word — so the row is still persisted rather than omitted.
+ * <p>
  * {@code line_item_id} is left as a plain UUID rather than a JPA association: the DB enforces it via a
  * composite foreign key on (invoice_id, line_item_id) -&gt; invoice_line_item(invoice_id, id), which JPA
  * cannot model cleanly as an object reference.

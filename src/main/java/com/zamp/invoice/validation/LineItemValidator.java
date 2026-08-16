@@ -1,9 +1,9 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/** Checks each line item's own arithmetic and completeness, independent of the invoice-level totals {@link InvoiceValidator} reconciles. */
 @Component
 public class LineItemValidator {
 

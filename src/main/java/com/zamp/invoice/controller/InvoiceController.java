@@ -1,7 +1,7 @@
 package com.zamp.invoice.controller;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.dto.InvoiceUploadResponse;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.dto.InvoiceUploadResponse;
 import com.zamp.invoice.exception.UnsupportedFileTypeException;
 import com.zamp.invoice.service.ExtractionPipelineService;
 import com.zamp.invoice.service.InvoiceService;
@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Set;
 
+/** Handles invoice upload; the extraction pipeline it kicks off runs asynchronously, so this returns as soon as the file is persisted. */
 @RestController
 @RequestMapping("/invoices")
 public class InvoiceController {

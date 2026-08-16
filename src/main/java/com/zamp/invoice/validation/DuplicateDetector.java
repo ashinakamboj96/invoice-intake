@@ -1,10 +1,10 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.domain.ReviewActionType;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.enums.ReviewActionType;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
 import com.zamp.invoice.repository.InvoiceRepository;
 import com.zamp.invoice.repository.ValidationFailureRepository;
 import org.springframework.stereotype.Component;
@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+/** Exact-match duplicate detection only — see decisions.md ("Duplicate detection") for why fuzzy matching was cut. */
 @Component
 public class DuplicateDetector {
 

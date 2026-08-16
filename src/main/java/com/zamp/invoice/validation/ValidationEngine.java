@@ -1,10 +1,10 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.domain.ExtractionEvidence;
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.domain.ValidationFailure;
+import com.zamp.invoice.model.entity.ExtractionEvidence;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.model.entity.ValidationFailure;
 import com.zamp.invoice.exception.InvoiceNotFoundException;
 import com.zamp.invoice.repository.ExtractionEvidenceRepository;
 import com.zamp.invoice.repository.InvoiceLineItemRepository;
@@ -19,6 +19,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+/**
+ * Orchestrates every validator against one invoice and reconciles the result against what's
+ * already stored: existing unresolved failures for rules that no longer fire are auto-resolved,
+ * new failures are persisted, and the invoice's status is set to {@code ACCEPTED} or
+ * {@code NEEDS_REVIEW} accordingly. The single entry point every other part of the pipeline
+ * (initial processing, and revalidation after a review round) goes through.
+ */
 @Slf4j
 @Component
 public class ValidationEngine {

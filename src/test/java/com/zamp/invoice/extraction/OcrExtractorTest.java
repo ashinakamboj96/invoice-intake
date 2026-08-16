@@ -2,6 +2,7 @@ package com.zamp.invoice.extraction;
 
 import com.zamp.invoice.config.OcrConfig;
 import com.zamp.invoice.exception.ExtractionFailedException;
+import com.zamp.invoice.model.extraction.ExtractionResult;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

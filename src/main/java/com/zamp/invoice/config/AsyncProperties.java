@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/** Binds {@code async.*} in application.yml — sizing for the extraction pipeline's thread pool. */
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "async")

@@ -1,12 +1,18 @@
 package com.zamp.invoice.util;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceStatus;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.enums.InvoiceStatus;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Composable {@link Specification} predicates for the invoice search/list API — one per filter,
+ * each returning {@code null} (meaning "no restriction") when its filter value is absent, so
+ * {@code InvoiceService.listInvoices} can {@code .and()} them together regardless of which
+ * filters the caller actually supplied.
+ */
 public class InvoiceSpecification {
 
     private InvoiceSpecification() {

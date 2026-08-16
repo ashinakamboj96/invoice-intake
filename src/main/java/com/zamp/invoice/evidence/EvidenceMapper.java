@@ -1,10 +1,10 @@
 package com.zamp.invoice.evidence;
 
-import com.zamp.invoice.domain.ExtractionEvidence;
-import com.zamp.invoice.domain.FieldName;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.extraction.OcrWord;
-import com.zamp.invoice.llm.LlmInvoiceResult;
+import com.zamp.invoice.model.entity.ExtractionEvidence;
+import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.model.extraction.OcrWord;
+import com.zamp.invoice.model.llm.LlmInvoiceResult;
 import com.zamp.invoice.repository.ExtractionEvidenceRepository;
 import com.zamp.invoice.repository.InvoiceRepository;
 import lombok.AllArgsConstructor;
@@ -22,6 +22,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Bridges the LLM's structured output back to Tesseract's OCR results: for each field the LLM
+ * extracted, finds the OCR word(s) it most likely came from and records that word's confidence as
+ * the field's trust signal. This is the one place OCR confidence and LLM output actually meet —
+ * see decisions.md ("Evidence-based confidence") for why that connection matters.
+ */
 @Component
 public class EvidenceMapper {
 

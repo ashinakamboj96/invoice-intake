@@ -1,9 +1,9 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+/** Reconciles invoice-level totals (subtotal, tax, total) against the line items. */
 @Component
 public class InvoiceValidator {
 

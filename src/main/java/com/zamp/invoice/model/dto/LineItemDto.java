@@ -1,4 +1,4 @@
-package com.zamp.invoice.dto;
+package com.zamp.invoice.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/** API projection of {@code InvoiceLineItem} — same fields, decoupled from the JPA entity. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -1,13 +1,13 @@
 package com.zamp.invoice.service;
 
-import com.zamp.invoice.domain.FieldName;
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.domain.ReviewActionType;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
-import com.zamp.invoice.dto.CompleteReviewRequest;
-import com.zamp.invoice.dto.CompleteReviewResponse;
+import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.enums.ReviewActionType;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
+import com.zamp.invoice.model.dto.CompleteReviewRequest;
+import com.zamp.invoice.model.dto.CompleteReviewResponse;
 import com.zamp.invoice.exception.InvalidReviewActionException;
 import com.zamp.invoice.repository.InvoiceLineItemRepository;
 import com.zamp.invoice.repository.InvoiceRepository;

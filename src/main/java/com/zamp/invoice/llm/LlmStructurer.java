@@ -2,9 +2,16 @@ package com.zamp.invoice.llm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zamp.invoice.exception.LlmUnavailableException;
+import com.zamp.invoice.model.llm.LlmInvoiceResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+/**
+ * Maps raw extracted text onto the canonical invoice schema via the LLM — semantic understanding
+ * only. The prompt explicitly forbids the model from calculating, inferring, or inventing values;
+ * every arithmetic and consistency check is deterministic code in {@code validation}, not
+ * something asked of the model. See decisions.md ("LLM role: semantic structuring only").
+ */
 @Slf4j
 @Component
 public class LlmStructurer {
@@ -54,6 +61,11 @@ public class LlmStructurer {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * @param rawText text from {@code PdfTextExtractor} or {@code OcrExtractor}
+     * @return the LLM's field-by-field reading of the invoice; any field it couldn't find is null
+     * @throws LlmUnavailableException if the underlying call fails, or the model's reply isn't valid JSON matching {@link LlmInvoiceResult}
+     */
     public LlmInvoiceResult structure(String rawText) throws LlmUnavailableException {
         String response = llmClient.complete(SYSTEM_PROMPT, rawText);
         try {

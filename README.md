@@ -7,7 +7,10 @@ Upload a PDF or image invoice → extract and structure it →
 validate with deterministic rules → surface uncertainty to a
 human reviewer → produce a trusted, queryable invoice record.
 
-**Live demo:** [your Render URL here]
+**Live demo:** https://invoice-intake-a1ti.onrender.com/
+
+> Note: hosted on Render free tier — first request after inactivity
+> may take 30–60 seconds to cold start.
 
 ---
 

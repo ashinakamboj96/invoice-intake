@@ -12,6 +12,11 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
 
+/**
+ * Enables {@code @Async} and provides the dedicated thread pool the extraction pipeline runs on,
+ * plus a catch-all handler for exceptions that escape an {@code @Async} method — which Spring
+ * would otherwise only log, silently leaving the invoice stuck in {@code PROCESSING} forever.
+ */
 @Slf4j
 @Configuration
 @EnableAsync
@@ -24,6 +29,7 @@ public class AsyncConfig implements AsyncConfigurer {
         this.properties = properties;
     }
 
+    /** Backs every {@code @Async} method in the extraction pipeline; sized via {@link AsyncProperties}. */
     @Bean(name = "extractionTaskExecutor")
     public Executor extractionTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

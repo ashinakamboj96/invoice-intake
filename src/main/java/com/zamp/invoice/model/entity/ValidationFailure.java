@@ -1,5 +1,8 @@
-package com.zamp.invoice.domain;
+package com.zamp.invoice.model.entity;
 
+import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.enums.ReviewActionType;
+import com.zamp.invoice.enums.ValidationScope;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,6 +25,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
+ * One deterministic validation rule failing for one invoice — the record a human reviewer works
+ * through on the review screen. Doubles as the review-state record: {@code resolved}/{@code
+ * action}/{@code newValue} are set in place once a reviewer acts, rather than in a separate audit
+ * table (see decisions.md for why). {@code action == APPROVED} also makes {@code rule} permanently
+ * skipped on future revalidation passes for this invoice.
+ * <p>
  * {@code line_item_id} is left as a plain UUID rather than a JPA association: the DB enforces it via a
  * composite foreign key on (invoice_id, line_item_id) -&gt; invoice_line_item(invoice_id, id), which JPA
  * cannot model cleanly as an object reference.

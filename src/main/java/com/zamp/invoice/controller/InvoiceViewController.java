@@ -1,7 +1,7 @@
 package com.zamp.invoice.controller;
 
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.dto.InvoiceListResponse;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.model.dto.InvoiceListResponse;
 import com.zamp.invoice.service.InvoiceService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;

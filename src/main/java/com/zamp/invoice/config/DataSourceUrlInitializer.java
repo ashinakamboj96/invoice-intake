@@ -1,7 +1,6 @@
 package com.zamp.invoice.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -21,9 +20,8 @@ import java.util.Map;
  * before the DataSource bean reads the property, rather than requiring Render-specific URL
  * handling in application.yml.
  */
+@Slf4j
 public class DataSourceUrlInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-    private static final Logger log = LoggerFactory.getLogger(DataSourceUrlInitializer.class);
 
     @Override
     public void initialize(ConfigurableApplicationContext context) {

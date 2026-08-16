@@ -1,4 +1,4 @@
-package com.zamp.invoice.dto;
+package com.zamp.invoice.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/** Paginated response for {@code GET /api/invoices}. */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

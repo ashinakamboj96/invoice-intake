@@ -1,10 +1,10 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.domain.ExtractionEvidence;
-import com.zamp.invoice.domain.FieldName;
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
+import com.zamp.invoice.model.entity.ExtractionEvidence;
+import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/** Presence/format checks on invoice-level fields, independent of OCR confidence or arithmetic. */
 @Component
 public class FieldValidator {
 

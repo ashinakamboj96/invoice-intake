@@ -1,15 +1,15 @@
 package com.zamp.invoice.service;
 
-import com.zamp.invoice.domain.FieldName;
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.domain.ReviewActionType;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
-import com.zamp.invoice.dto.CompleteReviewRequest;
-import com.zamp.invoice.dto.CompleteReviewResponse;
-import com.zamp.invoice.dto.ValidationFailureDto;
+import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.enums.InvoiceStatus;
+import com.zamp.invoice.enums.ReviewActionType;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
+import com.zamp.invoice.model.dto.CompleteReviewRequest;
+import com.zamp.invoice.model.dto.CompleteReviewResponse;
+import com.zamp.invoice.model.dto.ValidationFailureDto;
 import com.zamp.invoice.exception.InvalidReviewActionException;
 import com.zamp.invoice.exception.InvoiceNotFoundException;
 import com.zamp.invoice.repository.InvoiceLineItemRepository;
@@ -33,6 +33,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/** Write side of human review: applying a reviewer's resolutions to an invoice's failures and revalidating. See {@link #completeReview} for the core flow. */
 @Service
 public class ReviewService {
 
@@ -49,10 +50,6 @@ public class ReviewService {
         this.invoiceLineItemRepository = invoiceLineItemRepository;
         this.validationFailureRepository = validationFailureRepository;
         this.validationEngine = validationEngine;
-    }
-
-    public List<ValidationFailureDto> getPendingFailures(UUID invoiceId) {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     /**

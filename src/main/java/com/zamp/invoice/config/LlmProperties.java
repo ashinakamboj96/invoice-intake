@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/** Binds {@code llm.*} in application.yml — the LLM provider API key, model, and call timeout. */
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "llm")

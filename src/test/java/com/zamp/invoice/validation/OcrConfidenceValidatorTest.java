@@ -1,12 +1,12 @@
 package com.zamp.invoice.validation;
 
 import com.zamp.invoice.config.ValidationConfig;
-import com.zamp.invoice.domain.ExtractionEvidence;
-import com.zamp.invoice.domain.ExtractionMethod;
-import com.zamp.invoice.domain.FieldName;
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
+import com.zamp.invoice.model.entity.ExtractionEvidence;
+import com.zamp.invoice.enums.ExtractionMethod;
+import com.zamp.invoice.enums.FieldName;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

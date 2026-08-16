@@ -2,6 +2,7 @@ package com.zamp.invoice.llm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zamp.invoice.exception.LlmUnavailableException;
+import com.zamp.invoice.model.llm.LlmInvoiceResult;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

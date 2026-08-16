@@ -1,8 +1,10 @@
 package com.zamp.invoice.extraction;
 
 import com.zamp.invoice.config.OcrConfig;
-import com.zamp.invoice.domain.ExtractionMethod;
+import com.zamp.invoice.enums.ExtractionMethod;
 import com.zamp.invoice.exception.ExtractionFailedException;
+import com.zamp.invoice.model.extraction.ExtractionResult;
+import com.zamp.invoice.model.extraction.OcrWord;
 import net.sourceforge.tess4j.ITessAPI;
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
@@ -20,6 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Renders each page of a scanned PDF or image to a bitmap and runs Tesseract over it, capturing
+ * both the recognized text and per-word confidence/position ({@link OcrWord}) for later evidence
+ * mapping.
+ */
 @Component
 public class OcrExtractor {
 
@@ -32,6 +39,13 @@ public class OcrExtractor {
         this.ocrConfig = ocrConfig;
     }
 
+    /**
+     * @param fileBytes the file to OCR — a PDF (rendered page by page) or a plain image
+     * @param filename  used only to decide whether to treat {@code fileBytes} as a PDF
+     * @return the recognized text plus every word's confidence and bounding box
+     * @throws ExtractionFailedException if OCR recognized fewer than {@value #MIN_EXTRACTED_CHARACTERS}
+     *                                    non-whitespace characters, or the file couldn't be rendered at all
+     */
     public ExtractionResult extract(byte[] fileBytes, String filename) throws ExtractionFailedException {
         try {
             List<BufferedImage> pages = renderPages(fileBytes, filename);
@@ -71,6 +85,9 @@ public class OcrExtractor {
         }
     }
 
+    // ITesseract is not thread-safe, so a fresh instance is created per call rather than reused as
+    // a Spring singleton bean — concurrent extractions (the pipeline runs on a multi-thread pool)
+    // would otherwise corrupt each other's state.
     private ITesseract createTesseract() {
         ITesseract tesseract = new Tesseract();
         tesseract.setDatapath(ocrConfig.getTessDataPath());

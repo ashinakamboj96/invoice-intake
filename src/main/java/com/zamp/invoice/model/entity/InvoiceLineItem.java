@@ -1,4 +1,4 @@
-package com.zamp.invoice.domain;
+package com.zamp.invoice.model.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +17,7 @@ import lombok.ToString;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/** One line item extracted from an invoice, e.g. a single billed product or service. */
 @Entity
 @Table(name = "invoice_line_item")
 @Getter

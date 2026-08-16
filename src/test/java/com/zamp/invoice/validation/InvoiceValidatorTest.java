@@ -1,8 +1,8 @@
 package com.zamp.invoice.validation;
 
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.domain.ValidationFailure;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.model.entity.ValidationFailure;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

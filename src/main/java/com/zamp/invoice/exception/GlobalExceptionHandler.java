@@ -1,5 +1,6 @@
 package com.zamp.invoice.exception;
 
+import com.zamp.invoice.model.dto.ErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+/** Maps every exception type the API can throw to a status code and a uniform {@link ErrorResponse} body. */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

@@ -1,4 +1,4 @@
-package com.zamp.invoice.llm;
+package com.zamp.invoice.model.llm;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +8,13 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * The LLM's raw structuring output — a direct deserialization target for its JSON response, before
+ * {@code InvoicePersister} maps it onto the {@code Invoice} entity. Fields are left as {@code
+ * String} (e.g. {@code invoiceDate}) rather than parsed types where the LLM's output still needs
+ * validation/parsing downstream; any field the LLM couldn't find in the source text is null,
+ * never guessed or defaulted.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,6 +30,7 @@ public class LlmInvoiceResult {
     private BigDecimal totalAmount;
     private List<LlmLineItem> lineItems;
 
+    /** One line item as the LLM read it, before persistence. */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

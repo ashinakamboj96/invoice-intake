@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
 
+/** Binds {@code validation.*} in application.yml — thresholds the validation engine applies, adjustable without a code change. */
 @Getter
 @Setter
 @Configuration

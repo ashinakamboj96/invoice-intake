@@ -1,12 +1,12 @@
 package com.zamp.invoice.validation;
 
 import com.zamp.invoice.config.ValidationConfig;
-import com.zamp.invoice.domain.ExtractionEvidence;
-import com.zamp.invoice.domain.ExtractionMethod;
-import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceLineItem;
-import com.zamp.invoice.domain.ValidationFailure;
-import com.zamp.invoice.domain.ValidationScope;
+import com.zamp.invoice.model.entity.ExtractionEvidence;
+import com.zamp.invoice.enums.ExtractionMethod;
+import com.zamp.invoice.model.entity.Invoice;
+import com.zamp.invoice.model.entity.InvoiceLineItem;
+import com.zamp.invoice.model.entity.ValidationFailure;
+import com.zamp.invoice.enums.ValidationScope;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/** Flags low-confidence and unmatched OCR evidence — the validator that turns {@code EvidenceMapper}'s output into reviewer-facing warnings. */
 @Component
 public class OcrConfidenceValidator {
 
