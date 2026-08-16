@@ -84,7 +84,7 @@ class InvoiceServiceListTest {
         Invoice invoice = sampleInvoice();
         stubFindAll(new PageImpl<>(List.of(invoice), Pageable.ofSize(20), 1));
 
-        InvoiceListResponse response = invoiceService.listInvoices(null, null, null, null, null, null, 0, 20);
+        InvoiceListResponse response = invoiceService.listInvoices(null, null, null, null, null, null, null, null, 0, 20);
 
         assertThat(response.getInvoices()).hasSize(1);
         assertThat(response.getTotalElements()).isEqualTo(1);
@@ -98,7 +98,7 @@ class InvoiceServiceListTest {
     void statusFilterSpecificationIncludesStatusPredicate() {
         stubFindAll(new PageImpl<>(List.of()));
 
-        invoiceService.listInvoices(InvoiceStatus.NEEDS_REVIEW, null, null, null, null, null, 0, 20);
+        invoiceService.listInvoices(InvoiceStatus.NEEDS_REVIEW, null, null, null, null, null, null, null, 0, 20);
 
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
@@ -115,7 +115,7 @@ class InvoiceServiceListTest {
     void vendorFilterIsCaseInsensitiveContains() {
         stubFindAll(new PageImpl<>(List.of()));
 
-        invoiceService.listInvoices(null, "Acme", null, null, null, null, 0, 20);
+        invoiceService.listInvoices(null, "Acme", null, null, null, null, null, null, 0, 20);
 
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
@@ -131,12 +131,50 @@ class InvoiceServiceListTest {
     }
 
     @Test
+    void invoiceNumberFilterIsCaseInsensitiveContains() {
+        stubFindAll(new PageImpl<>(List.of()));
+
+        invoiceService.listInvoices(null, null, "inv-20481", null, null, null, null, null, 0, 20);
+
+        Specification<Invoice> spec = captureSpecification();
+        Root<Invoice> root = mock(Root.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path<String> invoiceNumberPath = mock(Path.class);
+        Expression<String> loweredInvoiceNumber = mock(Expression.class);
+        when(root.<String>get("invoiceNumber")).thenReturn(invoiceNumberPath);
+        when(cb.lower(invoiceNumberPath)).thenReturn(loweredInvoiceNumber);
+
+        spec.toPredicate(root, mock(CriteriaQuery.class), cb);
+
+        verify(cb).like(loweredInvoiceNumber, "%inv-20481%");
+    }
+
+    @Test
+    void currencyFilterMatchesCaseInsensitively() {
+        stubFindAll(new PageImpl<>(List.of()));
+
+        invoiceService.listInvoices(null, null, null, "usd", null, null, null, null, 0, 20);
+
+        Specification<Invoice> spec = captureSpecification();
+        Root<Invoice> root = mock(Root.class);
+        CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        Path<String> currencyPath = mock(Path.class);
+        Expression<String> upperedCurrency = mock(Expression.class);
+        when(root.<String>get("currency")).thenReturn(currencyPath);
+        when(cb.upper(currencyPath)).thenReturn(upperedCurrency);
+
+        spec.toPredicate(root, mock(CriteriaQuery.class), cb);
+
+        verify(cb).equal(upperedCurrency, "USD");
+    }
+
+    @Test
     void dateRangeFilterAppliesFromAndTo() {
         stubFindAll(new PageImpl<>(List.of()));
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 12, 31);
 
-        invoiceService.listInvoices(null, null, from, to, null, null, 0, 20);
+        invoiceService.listInvoices(null, null, null, null, from, to, null, null, 0, 20);
 
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
@@ -156,7 +194,7 @@ class InvoiceServiceListTest {
         BigDecimal min = new BigDecimal("100.00");
         BigDecimal max = new BigDecimal("500.00");
 
-        invoiceService.listInvoices(null, null, null, null, min, max, 0, 20);
+        invoiceService.listInvoices(null, null, null, null, null, null, min, max, 0, 20);
 
         Specification<Invoice> spec = captureSpecification();
         Root<Invoice> root = mock(Root.class);
@@ -176,7 +214,7 @@ class InvoiceServiceListTest {
         stubFindAll(new PageImpl<>(List.of(invoice), Pageable.ofSize(20), 1));
         when(validationFailureRepository.countByInvoiceIdAndResolvedFalse(invoice.getId())).thenReturn(3);
 
-        InvoiceListResponse response = invoiceService.listInvoices(null, null, null, null, null, null, 0, 20);
+        InvoiceListResponse response = invoiceService.listInvoices(null, null, null, null, null, null, null, null, 0, 20);
 
         assertThat(response.getInvoices()).hasSize(1);
         assertThat(response.getInvoices().get(0).getUnresolvedFailureCount()).isEqualTo(3);

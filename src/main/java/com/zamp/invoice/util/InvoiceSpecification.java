@@ -29,6 +29,18 @@ public class InvoiceSpecification {
                         cb.like(cb.lower(root.get("vendorName")), "%" + vendor.toLowerCase() + "%");
     }
 
+    public static Specification<Invoice> hasCurrency(String currency) {
+        return (root, query, cb) ->
+                currency == null || currency.isBlank() ? null :
+                        cb.equal(cb.upper(root.get("currency")), currency.toUpperCase());
+    }
+
+    public static Specification<Invoice> invoiceNumberContains(String invoiceNumber) {
+        return (root, query, cb) ->
+                invoiceNumber == null || invoiceNumber.isBlank() ? null :
+                        cb.like(cb.lower(root.get("invoiceNumber")), "%" + invoiceNumber.toLowerCase() + "%");
+    }
+
     public static Specification<Invoice> dateFrom(LocalDate from) {
         return (root, query, cb) ->
                 from == null ? null : cb.greaterThanOrEqualTo(root.get("invoiceDate"), from);

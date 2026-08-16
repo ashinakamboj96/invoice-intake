@@ -27,4 +27,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID>, JpaSpec
             @Param("invoiceNumber") String invoiceNumber,
             @Param("excludeStatuses") List<InvoiceStatus> excludeStatuses
     );
+
+    /** Every distinct currency actually present on an invoice, for the list page's currency filter — reflects real data rather than the full ISO 4217 set. */
+    @Query("SELECT DISTINCT i.currency FROM Invoice i WHERE i.currency IS NOT NULL ORDER BY i.currency")
+    List<String> findDistinctCurrencies();
 }

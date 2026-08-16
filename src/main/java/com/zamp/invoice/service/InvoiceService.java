@@ -140,6 +140,8 @@ public class InvoiceService {
     /** Filters (any/all optional, unset ones simply don't restrict the query — see {@link InvoiceSpecification}), sorted newest-uploaded-first, and paginated. */
     public InvoiceListResponse listInvoices(InvoiceStatus status,
                                              String vendor,
+                                             String invoiceNumber,
+                                             String currency,
                                              LocalDate dateFrom,
                                              LocalDate dateTo,
                                              BigDecimal amountMin,
@@ -149,6 +151,8 @@ public class InvoiceService {
         Specification<Invoice> spec = Specification
                 .where(InvoiceSpecification.hasStatus(status))
                 .and(InvoiceSpecification.vendorContains(vendor))
+                .and(InvoiceSpecification.invoiceNumberContains(invoiceNumber))
+                .and(InvoiceSpecification.hasCurrency(currency))
                 .and(InvoiceSpecification.dateFrom(dateFrom))
                 .and(InvoiceSpecification.dateTo(dateTo))
                 .and(InvoiceSpecification.amountMin(amountMin))
@@ -166,6 +170,11 @@ public class InvoiceService {
                 .totalPages(resultPage.getTotalPages())
                 .currentPage(resultPage.getNumber())
                 .build();
+    }
+
+    /** Currencies actually present on at least one invoice, for populating the list page's currency filter. */
+    public List<String> listDistinctCurrencies() {
+        return invoiceRepository.findDistinctCurrencies();
     }
 
     private InvoiceListItem toListItem(Invoice invoice) {

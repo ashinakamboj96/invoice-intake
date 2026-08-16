@@ -32,6 +32,8 @@ public class InvoiceViewController {
     public String listInvoices(
             @RequestParam(required = false) InvoiceStatus status,
             @RequestParam(required = false) String vendor,
+            @RequestParam(required = false) String invoiceNumber,
+            @RequestParam(required = false) String currency,
             @RequestParam(required = false) @DateTimeFormat(iso = DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DATE) LocalDate dateTo,
             @RequestParam(required = false) BigDecimal amountMin,
@@ -40,7 +42,7 @@ public class InvoiceViewController {
             @RequestParam(defaultValue = "20") int size,
             Model model) {
         InvoiceListResponse result = invoiceService.listInvoices(
-                status, vendor, dateFrom, dateTo, amountMin, amountMax, page, size);
+                status, vendor, invoiceNumber, currency, dateFrom, dateTo, amountMin, amountMax, page, size);
 
         model.addAttribute("invoices", result.getInvoices());
         model.addAttribute("totalElements", result.getTotalElements());
@@ -48,8 +50,11 @@ public class InvoiceViewController {
         model.addAttribute("currentPage", result.getCurrentPage());
         model.addAttribute("pageSize", size == 0 ? DEFAULT_PAGE_SIZE : size);
         model.addAttribute("statuses", InvoiceStatus.values());
+        model.addAttribute("currencies", invoiceService.listDistinctCurrencies());
         model.addAttribute("currentStatus", status);
         model.addAttribute("currentVendor", vendor);
+        model.addAttribute("currentInvoiceNumber", invoiceNumber);
+        model.addAttribute("currentCurrency", currency);
         model.addAttribute("currentDateFrom", dateFrom);
         model.addAttribute("currentDateTo", dateTo);
         model.addAttribute("currentAmountMin", amountMin);

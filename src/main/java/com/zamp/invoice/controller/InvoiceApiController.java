@@ -43,6 +43,8 @@ public class InvoiceApiController {
     public ResponseEntity<InvoiceListResponse> listInvoices(
             @RequestParam(value = "status", required = false) InvoiceStatus status,
             @RequestParam(value = "vendor", required = false) String vendor,
+            @RequestParam(value = "invoiceNumber", required = false) String invoiceNumber,
+            @RequestParam(value = "currency", required = false) String currency,
             @RequestParam(value = "dateFrom", required = false) @DateTimeFormat(iso = DATE) LocalDate dateFrom,
             @RequestParam(value = "dateTo", required = false) @DateTimeFormat(iso = DATE) LocalDate dateTo,
             @RequestParam(value = "amountMin", required = false) BigDecimal amountMin,
@@ -51,6 +53,6 @@ public class InvoiceApiController {
             @RequestParam(value = "size", defaultValue = "20") int size) {
         int cappedSize = Math.min(size, MAX_PAGE_SIZE);
         return ResponseEntity.ok(invoiceService.listInvoices(
-                status, vendor, dateFrom, dateTo, amountMin, amountMax, page, cappedSize));
+                status, vendor, invoiceNumber, currency, dateFrom, dateTo, amountMin, amountMax, page, cappedSize));
     }
 }
