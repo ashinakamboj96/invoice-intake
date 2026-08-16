@@ -65,6 +65,35 @@ class OcrConfidenceValidatorTest {
     }
 
     @Test
+    void nullConfidenceOnDescriptionProducesNoFailure() {
+        Invoice invoice = Invoice.builder().extractionMethod(ExtractionMethod.OCR).build();
+        ExtractionEvidence evidenceRow = ExtractionEvidence.builder()
+                .fieldName(FieldName.DESCRIPTION)
+                .lineItemId(UUID.randomUUID())
+                .ocrConfidence(null)
+                .build();
+
+        List<ValidationFailure> failures = validator.validate(invoice, List.of(evidenceRow), List.of());
+
+        assertThat(failures).isEmpty();
+    }
+
+    @Test
+    void nullConfidenceOnTotalAmountStillProducesFailure() {
+        Invoice invoice = Invoice.builder().extractionMethod(ExtractionMethod.OCR).build();
+        ExtractionEvidence evidenceRow = ExtractionEvidence.builder()
+                .fieldName(FieldName.TOTAL_AMOUNT)
+                .ocrConfidence(null)
+                .build();
+
+        List<ValidationFailure> failures = validator.validate(invoice, List.of(evidenceRow), List.of());
+
+        assertThat(failures).hasSize(1);
+        assertThat(failures.get(0).getRule()).isEqualTo("OCR_SOURCE_NOT_FOUND");
+        assertThat(failures.get(0).getFieldName()).isEqualTo(FieldName.TOTAL_AMOUNT);
+    }
+
+    @Test
     void highConfidenceProducesNoFailure() {
         Invoice invoice = Invoice.builder().extractionMethod(ExtractionMethod.OCR).build();
         ExtractionEvidence evidenceRow = ExtractionEvidence.builder()

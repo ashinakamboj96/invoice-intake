@@ -8,6 +8,7 @@ import com.zamp.invoice.repository.InvoiceRepository;
 import com.zamp.invoice.repository.ValidationFailureRepository;
 import org.junit.jupiter.api.Test;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -80,6 +81,65 @@ class DuplicateDetectorTest {
         detector.detect(invoice);
 
         verify(invoiceRepository).findPotentialExactDuplicates(eq(invoice.getId()), any(), any(), any());
+    }
+
+    @Test
+    void multipleMatchesProduceOneFailurePointingAtTheAcceptedOne() {
+        Invoice invoice = newInvoice();
+        Invoice accepted = Invoice.builder()
+                .id(UUID.randomUUID())
+                .vendorName("Acme Supplies Inc.")
+                .invoiceNumber("INV-20481")
+                .status(InvoiceStatus.ACCEPTED)
+                .uploadedAt(OffsetDateTime.now().minusDays(2))
+                .build();
+        Invoice needsReview = Invoice.builder()
+                .id(UUID.randomUUID())
+                .vendorName("Acme Supplies Inc.")
+                .invoiceNumber("INV-20481")
+                .status(InvoiceStatus.NEEDS_REVIEW)
+                .uploadedAt(OffsetDateTime.now().minusDays(1))
+                .build();
+        Invoice rejected = Invoice.builder()
+                .id(UUID.randomUUID())
+                .vendorName("Acme Supplies Inc.")
+                .invoiceNumber("INV-20481")
+                .status(InvoiceStatus.REJECTED)
+                .uploadedAt(OffsetDateTime.now())
+                .build();
+        when(invoiceRepository.findPotentialExactDuplicates(any(), any(), any(), any()))
+                .thenReturn(List.of(needsReview, rejected, accepted));
+
+        List<ValidationFailure> failures = detector.detect(invoice);
+
+        assertThat(failures).hasSize(1);
+        assertThat(failures.get(0).getRelatedInvoice()).isEqualTo(accepted);
+    }
+
+    @Test
+    void onlyRejectedMatchesPicksTheMostRecentOne() {
+        Invoice invoice = newInvoice();
+        Invoice olderRejected = Invoice.builder()
+                .id(UUID.randomUUID())
+                .vendorName("Acme Supplies Inc.")
+                .invoiceNumber("INV-20481")
+                .status(InvoiceStatus.REJECTED)
+                .uploadedAt(OffsetDateTime.now().minusDays(3))
+                .build();
+        Invoice newerRejected = Invoice.builder()
+                .id(UUID.randomUUID())
+                .vendorName("Acme Supplies Inc.")
+                .invoiceNumber("INV-20481")
+                .status(InvoiceStatus.REJECTED)
+                .uploadedAt(OffsetDateTime.now().minusDays(1))
+                .build();
+        when(invoiceRepository.findPotentialExactDuplicates(any(), any(), any(), any()))
+                .thenReturn(List.of(olderRejected, newerRejected));
+
+        List<ValidationFailure> failures = detector.detect(invoice);
+
+        assertThat(failures).hasSize(1);
+        assertThat(failures.get(0).getRelatedInvoice()).isEqualTo(newerRejected);
     }
 
     @Test

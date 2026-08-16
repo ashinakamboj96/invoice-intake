@@ -9,6 +9,7 @@ import com.zamp.invoice.repository.InvoiceRepository;
 import com.zamp.invoice.repository.ValidationFailureRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -28,10 +29,13 @@ public class DuplicateDetector {
     }
 
     /**
-     * Looks for another non-{@code FAILED}, non-{@code PROCESSING} invoice with the same
-     * (normalized) vendor name and exact invoice number, and flags the first match found. A
-     * candidate a human has already dismissed as not-a-duplicate for this specific invoice pair
-     * (a {@code DUPLICATE_DISMISSED} review action) is skipped rather than re-flagged.
+     * Looks for other non-{@code FAILED}, non-{@code PROCESSING} invoices with the same
+     * (normalized) vendor name and exact invoice number, and flags the single best match — so a
+     * vendor/number pair re-uploaded many times produces one failure to resolve, not one per
+     * prior upload. "Best" favors the most trustworthy status first ({@code ACCEPTED} >
+     * {@code NEEDS_REVIEW} > {@code REJECTED}), then the most recently uploaded. A candidate a
+     * human has already dismissed as not-a-duplicate for this specific invoice pair (a
+     * {@code DUPLICATE_DISMISSED} review action) is skipped rather than re-flagged.
      *
      * @param invoice the invoice to check for duplicates; must have a vendor name and invoice
      *                number, otherwise there's nothing to match on
@@ -49,10 +53,20 @@ public class DuplicateDetector {
         return candidates.stream()
                 .filter(candidate -> normalize(candidate.getVendorName()).equals(normalizedVendor))
                 .filter(candidate -> !isAlreadyDismissed(invoice, candidate))
-                .findFirst()
+                .min(Comparator.comparingInt(this::statusPriority)
+                        .thenComparing(Invoice::getUploadedAt, Comparator.reverseOrder()))
                 .map(candidate -> buildFailure(invoice, candidate))
                 .map(List::of)
                 .orElseGet(List::of);
+    }
+
+    private int statusPriority(Invoice candidate) {
+        return switch (candidate.getStatus()) {
+            case ACCEPTED -> 0;
+            case NEEDS_REVIEW -> 1;
+            case REJECTED -> 2;
+            default -> 3;
+        };
     }
 
     private boolean isAlreadyDismissed(Invoice invoice, Invoice candidate) {
