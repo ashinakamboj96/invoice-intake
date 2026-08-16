@@ -90,11 +90,12 @@ public class InvoiceService {
                 .toList();
 
         List<ValidationFailure> allFailures = validationFailureRepository.findByInvoiceId(invoiceId);
-        // Duplicate failures surface first: confirming one is the only action that can end the
-        // review in a terminal (REJECTED) state, so it's the highest-priority decision on the screen.
+        // Ranked by how much a failure blocks or changes the outcome: a confirmed duplicate ends
+        // review outright, a missing required field or a broken total makes everything downstream
+        // suspect, and the rest are narrower, easier fixes.
         List<ValidationFailureDto> unresolvedFailures = allFailures.stream()
                 .filter(failure -> !failure.isResolved())
-                .sorted(Comparator.comparing((ValidationFailure failure) -> !failure.getRule().contains("DUPLICATE")))
+                .sorted(Comparator.comparingInt(failure -> failurePriority(failure.getRule())))
                 .map(ValidationFailureDto::from)
                 .toList();
         List<ValidationFailureDto> resolvedFailures = allFailures.stream()
@@ -139,6 +140,17 @@ public class InvoiceService {
                 .lineItemEvidenceSummary(lineItemEvidenceSummary)
                 .relatedInvoiceId(relatedInvoiceId)
                 .build();
+    }
+
+    private int failurePriority(String rule) {
+        return switch (rule) {
+            case "EXACT_DUPLICATE" -> 0;
+            case "MISSING_REQUIRED_FIELD" -> 1;
+            case "TOTAL_RECONCILIATION" -> 2;
+            case "SUBTOTAL_MISMATCH" -> 3;
+            case "LINE_TOTAL_MISMATCH" -> 4;
+            default -> 5;
+        };
     }
 
     private LineItemDto toLineItemDto(InvoiceLineItem lineItem) {

@@ -287,7 +287,6 @@ document.querySelectorAll('.resolve-btn').forEach((btn) => {
 document.querySelectorAll('.correct-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
         const failureId = btn.dataset.failureId;
-        const lineItemId = btn.dataset.lineItemId || null;
         const input = document.getElementById('correction-' + failureId);
         const newValue = input?.value?.trim();
         if (!newValue) {
@@ -295,35 +294,16 @@ document.querySelectorAll('.correct-btn').forEach((btn) => {
             return;
         }
         input.classList.remove('is-invalid');
-        recordResolution(failureId, 'CORRECTED', null, lineItemId);
+        recordResolution(failureId, 'CORRECTED', null, null);
     });
 });
 
 function recordResolution(failureId, action, fieldName, lineItemId) {
-    let newValue = null;
-
-    if (action === 'CORRECTED') {
-        if (fieldName) {
-            // Invoice-level field — read the current value straight from the field input.
-            newValue = document.getElementById('field-' + fieldName)?.value?.trim();
-            if (!newValue) {
-                showFieldError(fieldName, 'Please enter a value before marking as fixed.');
-                return;
-            }
-        } else if (lineItemId) {
-            // Line item field — either the card's own correction input (specific-field failures),
-            // or, for fieldless failures like LINE_TOTAL_MISMATCH, the row's own Amount input above
-            // (the implied field the backend falls back to for these).
-            const inlineInput = document.getElementById('correction-' + failureId);
-            if (inlineInput) {
-                newValue = inlineInput.value?.trim();
-            } else {
-                const rowInput = document.querySelector(
-                    `input.line-item-field[data-line-item-id="${lineItemId}"][data-field="AMOUNT"]`);
-                newValue = rowInput?.value?.trim();
-            }
-        }
-    }
+    // Every card's correction, invoice-field or line-item, now comes from its own inline input —
+    // the backend resolves which field a fieldless failure (e.g. LINE_TOTAL_MISMATCH) implies.
+    const newValue = action === 'CORRECTED'
+        ? document.getElementById('correction-' + failureId)?.value?.trim()
+        : null;
 
     resolutions[failureId] = { failureId, action, newValue };
 
@@ -345,10 +325,6 @@ function recordResolution(failureId, action, fieldName, lineItemId) {
         card.querySelectorAll('button, input').forEach((el) => {
             el.disabled = true;
         });
-        const undoBtn = card.querySelector('.undo-resolution-btn');
-        if (undoBtn) {
-            undoBtn.disabled = false;
-        }
     }
 
     checkAllResolved();
@@ -356,77 +332,29 @@ function recordResolution(failureId, action, fieldName, lineItemId) {
 
 // Lets a reviewer change their mind before submitting: clears the in-memory resolution and
 // re-enables the card's inputs/buttons. Nothing has been sent to the server yet at this point
-// (resolutions only go out on "Complete Review"), so this is a pure client-side undo.
-document.querySelectorAll('.undo-resolution-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-        const failureId = btn.dataset.failureId;
-        delete resolutions[failureId];
-
-        document.getElementById('resolved-indicator-' + failureId)?.classList.add('d-none');
-
-        const card = document.getElementById('failure-' + failureId);
-        if (card) {
-            card.style.opacity = '';
-            card.style.borderLeftColor = '';
-            card.querySelectorAll('button, input').forEach((el) => {
-                el.disabled = false;
-            });
-            btn.disabled = true;
-        }
-
-        checkAllResolved();
-    });
-});
-
-function showFieldError(fieldName, message) {
-    const input = document.getElementById('field-' + fieldName);
-    input?.classList.add('is-invalid');
-    const feedback = input?.parentElement?.querySelector('.invalid-feedback');
-    if (feedback) {
-        feedback.textContent = message;
-    }
-    setTimeout(() => input?.classList.remove('is-invalid'), 3000);
-}
-
-document.querySelectorAll('.go-to-field-link').forEach((link) => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        highlightField(link.dataset.fieldName);
-    });
-});
-
-document.querySelectorAll('.go-to-line-item-link').forEach((link) => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        highlightLineItem(link.dataset.lineItemId);
-    });
-});
-
-function highlightField(fieldName) {
-    const input = document.getElementById('field-' + fieldName);
-    if (!input) {
+// (resolutions only go out on "Complete Review"), so this is a pure client-side undo. Delegated
+// since every card has its own undo link, all present at load (not dynamically injected).
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('undo-link')) {
         return;
     }
-    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    input.classList.add('border-warning', 'border-2');
-    input.focus();
-    setTimeout(() => input.classList.remove('border-warning', 'border-2'), 3000);
-}
+    e.preventDefault();
+    const failureId = e.target.dataset.failureId;
+    delete resolutions[failureId];
 
-function highlightLineItem(lineItemId) {
-    const row = document.getElementById('line-item-' + lineItemId);
-    if (!row) {
-        return;
+    document.getElementById('resolved-indicator-' + failureId)?.classList.add('d-none');
+
+    const card = document.getElementById('failure-' + failureId);
+    if (card) {
+        card.style.opacity = '';
+        card.style.borderLeftColor = '';
+        card.querySelectorAll('button, input').forEach((el) => {
+            el.disabled = false;
+        });
     }
-    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    row.querySelectorAll('input').forEach((inp) => {
-        inp.classList.add('border-warning', 'border-2');
-    });
-    setTimeout(() => {
-        row.querySelectorAll('input').forEach((inp) =>
-            inp.classList.remove('border-warning', 'border-2'));
-    }, 3000);
-}
+
+    checkAllResolved();
+});
 
 function checkAllResolved() {
     const totalFailures = parseInt(

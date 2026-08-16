@@ -37,8 +37,8 @@ public class InvoiceValidator {
         if (invoice.getSubtotalAmount() != null && !lineItems.isEmpty()) {
             BigDecimal subtotal = invoice.getSubtotalAmount();
             if (lineItemSum.subtract(subtotal).abs().compareTo(TOLERANCE) > 0) {
-                String message = "Line items sum to " + lineItemSum.toPlainString()
-                        + ", but extracted subtotal is " + subtotal.toPlainString() + ".";
+                String message = "Line items add up to " + lineItemSum.toPlainString()
+                        + ", but the subtotal on the invoice says " + subtotal.toPlainString() + ".";
                 failures.add(buildFailure(invoice, "SUBTOTAL_MISMATCH", message));
             }
         }
@@ -52,8 +52,8 @@ public class InvoiceValidator {
             BigDecimal total = invoice.getTotalAmount();
 
             if (expected.subtract(total).abs().compareTo(TOLERANCE) > 0) {
-                String message = "Expected total is " + expected.toPlainString() + " (" + subtotalForReconciliation.toPlainString()
-                        + " + " + tax.toPlainString() + "), but extracted total is " + total.toPlainString() + ".";
+                String message = "Subtotal " + subtotalForReconciliation.toPlainString() + " + tax " + tax.toPlainString()
+                        + " = " + expected.toPlainString() + ", but the invoice total says " + total.toPlainString() + ".";
                 failures.add(buildFailure(invoice, "TOTAL_RECONCILIATION", message));
             }
         }

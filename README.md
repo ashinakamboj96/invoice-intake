@@ -12,6 +12,8 @@ human reviewer → produce a trusted, queryable invoice record.
 > Note: hosted on Render free tier — first request after inactivity
 > may take 30–60 seconds to cold start.
 
+![NEEDS_REVIEW screen: extracted fields, line items, and two flagged issues — a subtotal mismatch and an OCR digit misread — each resolved with a one-click approve or an inline correction](docs/needs-review-screenshot.png)
+
 ---
 
 ## What it does
@@ -140,7 +142,7 @@ architectural choice.
 mvn test
 ```
 
-56 tests, focused on:
+60 tests, focused on:
 - Validation engine (arithmetic, format, duplicate detection)
 - Evidence mapping (OCR confidence to schema fields)
 - Review service (correction, revalidation, duplicate handling,
@@ -153,8 +155,18 @@ mvn test
 
 ## Sample invoices for testing
 
-Upload any of these to see the system in action:
-- A clean PDF invoice → should reach ACCEPTED immediately
-- A photo of a handwritten or printed invoice → OCR path,
-  likely NEEDS_REVIEW with confidence warnings
-- The same invoice twice → EXACT_DUPLICATE flagged on second upload
+Two ready-to-upload files are included in [`/samples`](samples) so
+you don't need to hunt for your own:
+
+| File | Path | What it exercises |
+|---|---|---|
+| Digital PDF invoice | `samples/digital-invoice.pdf` | `PDF_TEXT` extraction — clean data, reaches `ACCEPTED` immediately |
+| Scanned invoice photo | `samples/scanned-invoice.jpg` | OCR extraction with a genuine digit misread (line total) and a subtotal mismatch — lands on `NEEDS_REVIEW`, as shown in the screenshot above |
+
+Upload either through the web UI, or:
+```bash
+curl -X POST http://localhost:8080/invoices -F "file=@samples/digital-invoice.pdf"
+```
+
+Upload the same file twice to see `EXACT_DUPLICATE` flagged on
+the second upload.

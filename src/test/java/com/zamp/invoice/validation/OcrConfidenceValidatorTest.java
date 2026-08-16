@@ -60,7 +60,8 @@ class OcrConfidenceValidatorTest {
         List<ValidationFailure> failures = validator.validate(invoice, List.of(evidenceRow), List.of());
 
         assertThat(failures).hasSize(1);
-        assertThat(failures.get(0).getMessage()).contains("source word could not be located");
+        assertThat(failures.get(0).getRule()).isEqualTo("OCR_SOURCE_NOT_FOUND");
+        assertThat(failures.get(0).getMessage()).contains("couldn't verify this value");
     }
 
     @Test

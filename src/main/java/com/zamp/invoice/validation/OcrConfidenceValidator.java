@@ -3,6 +3,7 @@ package com.zamp.invoice.validation;
 import com.zamp.invoice.config.ValidationConfig;
 import com.zamp.invoice.model.entity.ExtractionEvidence;
 import com.zamp.invoice.enums.ExtractionMethod;
+import com.zamp.invoice.enums.FieldName;
 import com.zamp.invoice.model.entity.Invoice;
 import com.zamp.invoice.model.entity.InvoiceLineItem;
 import com.zamp.invoice.model.entity.ValidationFailure;
@@ -52,15 +53,23 @@ public class OcrConfidenceValidator {
         List<ValidationFailure> failures = new ArrayList<>();
 
         for (ExtractionEvidence row : evidence) {
+            BigDecimal confidence = row.getOcrConfidence();
+
+            // DESCRIPTION is multi-word free text and frequently has no single matching OCR word
+            // even when the extraction is fine — suppressing this noise; the description is still
+            // visible and editable in the line items table, so nothing is hidden from the reviewer.
+            if (confidence == null && row.getFieldName() == FieldName.DESCRIPTION) {
+                continue;
+            }
+
             Integer lineNumber = row.getLineItemId() == null ? null : lineNumbersById.get(row.getLineItemId());
             String linePrefix = lineNumber == null ? "" : "Line " + lineNumber + ": ";
-            BigDecimal confidence = row.getOcrConfidence();
             if (confidence == null) {
                 failures.add(buildFailure(invoice, row, "OCR_SOURCE_NOT_FOUND",
-                        linePrefix + "OCR source word could not be located for this field."));
+                        linePrefix + "We couldn't verify this value in the original document — please check it looks right."));
             } else if (confidence.compareTo(threshold) < 0) {
-                String message = linePrefix + "OCR confidence was " + toPercent(confidence) + "%, below the "
-                        + toPercent(threshold) + "% review threshold.";
+                String message = linePrefix + "Our reading of this value wasn't very confident (" + toPercent(confidence)
+                        + "%). Please check it against the original.";
                 failures.add(buildFailure(invoice, row, "LOW_OCR_CONFIDENCE", message));
             }
         }

@@ -61,8 +61,8 @@ public class DuplicateDetector {
     }
 
     private ValidationFailure buildFailure(Invoice invoice, Invoice candidate) {
-        String message = "Invoice " + invoice.getInvoiceNumber() + " from " + invoice.getVendorName()
-                + " already exists in the system.";
+        String message = "An invoice from " + invoice.getVendorName() + " with number " + invoice.getInvoiceNumber()
+                + " already exists. Is this a re-upload or a new invoice?";
         return ValidationFailure.builder()
                 .id(UUID.randomUUID())
                 .invoice(invoice)

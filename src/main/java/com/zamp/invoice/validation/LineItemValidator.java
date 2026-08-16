@@ -45,7 +45,7 @@ public class LineItemValidator {
                 if (expected.subtract(amount).abs().compareTo(TOLERANCE) > 0) {
                     String message = "Line " + lineItem.getLineNumber() + ": " + quantity.toPlainString() + " × "
                             + unitPrice.toPlainString() + " = " + expected.toPlainString()
-                            + ", but extracted amount is " + amount.toPlainString() + ".";
+                            + ", but this line shows " + amount.toPlainString() + ". One of these values may be wrong.";
                     failures.add(buildFailure(invoice, lineItem, "LINE_TOTAL_MISMATCH", message));
                 }
             }

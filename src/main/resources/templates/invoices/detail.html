@@ -173,164 +173,87 @@
 
                 <div class="col-lg-7">
 
-                    <!-- Extracted Fields Panel -->
+                    <!-- Extracted Fields Panel — a yellow border means low OCR confidence; hover for the exact number. -->
                     <div class="card mb-3">
                         <div class="card-header fw-semibold">Extracted Fields</div>
                         <div class="card-body">
-                            <div class="row g-3">
+                            <div class="row g-2">
 
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small">Vendor Name</label>
-                                    <div class="input-group has-validation">
-                                        <input type="text" class="form-control invoice-field"
-                                               id="field-VENDOR_NAME"
-                                               data-field="VENDOR_NAME"
-                                               th:value="${invoice.vendorName}"
-                                               th:classappend="${invoice.evidenceSummary['VENDOR_NAME'] != null and invoice.evidenceSummary['VENDOR_NAME'] < 0.90} ? 'field-low-confidence' : ''">
-                                        <span class="input-group-text confidence-indicator"
-                                              id="conf-VENDOR_NAME"
-                                              th:title="${invoice.evidenceSummary['VENDOR_NAME'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['VENDOR_NAME'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'"
-                                              th:classappend="${invoice.evidenceSummary['VENDOR_NAME'] != null and invoice.evidenceSummary['VENDOR_NAME'] < 0.90} ? 'confidence-low' : 'confidence-ok'">
-                                            <i class="bi" th:classappend="${invoice.evidenceSummary['VENDOR_NAME'] != null and invoice.evidenceSummary['VENDOR_NAME'] < 0.90} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-                                        </span>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    <div class="form-text"
-                                         th:if="${invoice.evidenceSummary['VENDOR_NAME'] != null}"
-                                         th:classappend="${invoice.evidenceSummary['VENDOR_NAME'] < 0.90} ? 'text-danger' : 'text-success'"
-                                         th:text="${#numbers.formatDecimal(invoice.evidenceSummary['VENDOR_NAME'] * 100, 1, 1)} + '% OCR confidence'"></div>
+                                <div class="col-12 mb-2">
+                                    <label class="form-label text-muted small mb-1">Vendor Name</label>
+                                    <input type="text" class="form-control invoice-field"
+                                           id="field-VENDOR_NAME"
+                                           data-field="VENDOR_NAME"
+                                           th:value="${invoice.vendorName}"
+                                           th:classappend="${invoice.evidenceSummary['VENDOR_NAME'] != null and invoice.evidenceSummary['VENDOR_NAME'] < 0.90} ? 'field-low-confidence' : ''"
+                                           th:title="${invoice.evidenceSummary['VENDOR_NAME'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['VENDOR_NAME'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small">Invoice Number</label>
-                                    <div class="input-group has-validation">
-                                        <input type="text" class="form-control invoice-field"
-                                               id="field-INVOICE_NUMBER"
-                                               data-field="INVOICE_NUMBER"
-                                               th:value="${invoice.invoiceNumber}"
-                                               th:classappend="${invoice.evidenceSummary['INVOICE_NUMBER'] != null and invoice.evidenceSummary['INVOICE_NUMBER'] < 0.90} ? 'field-low-confidence' : ''">
-                                        <span class="input-group-text confidence-indicator"
-                                              id="conf-INVOICE_NUMBER"
-                                              th:title="${invoice.evidenceSummary['INVOICE_NUMBER'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_NUMBER'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'"
-                                              th:classappend="${invoice.evidenceSummary['INVOICE_NUMBER'] != null and invoice.evidenceSummary['INVOICE_NUMBER'] < 0.90} ? 'confidence-low' : 'confidence-ok'">
-                                            <i class="bi" th:classappend="${invoice.evidenceSummary['INVOICE_NUMBER'] != null and invoice.evidenceSummary['INVOICE_NUMBER'] < 0.90} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-                                        </span>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    <div class="form-text"
-                                         th:if="${invoice.evidenceSummary['INVOICE_NUMBER'] != null}"
-                                         th:classappend="${invoice.evidenceSummary['INVOICE_NUMBER'] < 0.90} ? 'text-danger' : 'text-success'"
-                                         th:text="${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_NUMBER'] * 100, 1, 1)} + '% OCR confidence'"></div>
+                                <div class="col-md-5 mb-2">
+                                    <label class="form-label text-muted small mb-1">Invoice Number</label>
+                                    <input type="text" class="form-control invoice-field"
+                                           id="field-INVOICE_NUMBER"
+                                           data-field="INVOICE_NUMBER"
+                                           th:value="${invoice.invoiceNumber}"
+                                           th:classappend="${invoice.evidenceSummary['INVOICE_NUMBER'] != null and invoice.evidenceSummary['INVOICE_NUMBER'] < 0.90} ? 'field-low-confidence' : ''"
+                                           th:title="${invoice.evidenceSummary['INVOICE_NUMBER'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_NUMBER'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small">Invoice Date</label>
-                                    <div class="input-group has-validation">
-                                        <input type="text" class="form-control invoice-field"
-                                               id="field-INVOICE_DATE"
-                                               data-field="INVOICE_DATE"
-                                               th:value="${invoice.invoiceDate}"
-                                               th:classappend="${invoice.evidenceSummary['INVOICE_DATE'] != null and invoice.evidenceSummary['INVOICE_DATE'] < 0.90} ? 'field-low-confidence' : ''">
-                                        <span class="input-group-text confidence-indicator"
-                                              id="conf-INVOICE_DATE"
-                                              th:title="${invoice.evidenceSummary['INVOICE_DATE'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_DATE'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'"
-                                              th:classappend="${invoice.evidenceSummary['INVOICE_DATE'] != null and invoice.evidenceSummary['INVOICE_DATE'] < 0.90} ? 'confidence-low' : 'confidence-ok'">
-                                            <i class="bi" th:classappend="${invoice.evidenceSummary['INVOICE_DATE'] != null and invoice.evidenceSummary['INVOICE_DATE'] < 0.90} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-                                        </span>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    <div class="form-text"
-                                         th:if="${invoice.evidenceSummary['INVOICE_DATE'] != null}"
-                                         th:classappend="${invoice.evidenceSummary['INVOICE_DATE'] < 0.90} ? 'text-danger' : 'text-success'"
-                                         th:text="${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_DATE'] * 100, 1, 1)} + '% OCR confidence'"></div>
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label text-muted small mb-1">Invoice Date</label>
+                                    <input type="text" class="form-control invoice-field"
+                                           id="field-INVOICE_DATE"
+                                           data-field="INVOICE_DATE"
+                                           th:value="${invoice.invoiceDate}"
+                                           th:classappend="${invoice.evidenceSummary['INVOICE_DATE'] != null and invoice.evidenceSummary['INVOICE_DATE'] < 0.90} ? 'field-low-confidence' : ''"
+                                           th:title="${invoice.evidenceSummary['INVOICE_DATE'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_DATE'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small">Currency</label>
-                                    <div class="input-group has-validation">
-                                        <input type="text" class="form-control invoice-field"
-                                               id="field-CURRENCY"
-                                               data-field="CURRENCY"
-                                               th:value="${invoice.currency}"
-                                               th:classappend="${invoice.evidenceSummary['CURRENCY'] != null and invoice.evidenceSummary['CURRENCY'] < 0.90} ? 'field-low-confidence' : ''">
-                                        <span class="input-group-text confidence-indicator"
-                                              id="conf-CURRENCY"
-                                              th:title="${invoice.evidenceSummary['CURRENCY'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['CURRENCY'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'"
-                                              th:classappend="${invoice.evidenceSummary['CURRENCY'] != null and invoice.evidenceSummary['CURRENCY'] < 0.90} ? 'confidence-low' : 'confidence-ok'">
-                                            <i class="bi" th:classappend="${invoice.evidenceSummary['CURRENCY'] != null and invoice.evidenceSummary['CURRENCY'] < 0.90} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-                                        </span>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    <div class="form-text"
-                                         th:if="${invoice.evidenceSummary['CURRENCY'] != null}"
-                                         th:classappend="${invoice.evidenceSummary['CURRENCY'] < 0.90} ? 'text-danger' : 'text-success'"
-                                         th:text="${#numbers.formatDecimal(invoice.evidenceSummary['CURRENCY'] * 100, 1, 1)} + '% OCR confidence'"></div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label text-muted small mb-1">Currency</label>
+                                    <input type="text" class="form-control invoice-field"
+                                           id="field-CURRENCY"
+                                           data-field="CURRENCY"
+                                           th:value="${invoice.currency}"
+                                           th:classappend="${invoice.evidenceSummary['CURRENCY'] != null and invoice.evidenceSummary['CURRENCY'] < 0.90} ? 'field-low-confidence' : ''"
+                                           th:title="${invoice.evidenceSummary['CURRENCY'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['CURRENCY'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small">Subtotal</label>
-                                    <div class="input-group has-validation">
-                                        <input type="text" class="form-control invoice-field"
-                                               id="field-SUBTOTAL_AMOUNT"
-                                               data-field="SUBTOTAL_AMOUNT"
-                                               th:value="${invoice.subtotalAmount}"
-                                               th:classappend="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null and invoice.evidenceSummary['SUBTOTAL_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''">
-                                        <span class="input-group-text confidence-indicator"
-                                              id="conf-SUBTOTAL_AMOUNT"
-                                              th:title="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['SUBTOTAL_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'"
-                                              th:classappend="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null and invoice.evidenceSummary['SUBTOTAL_AMOUNT'] < 0.90} ? 'confidence-low' : 'confidence-ok'">
-                                            <i class="bi" th:classappend="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null and invoice.evidenceSummary['SUBTOTAL_AMOUNT'] < 0.90} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-                                        </span>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    <div class="form-text"
-                                         th:if="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null}"
-                                         th:classappend="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] < 0.90} ? 'text-danger' : 'text-success'"
-                                         th:text="${#numbers.formatDecimal(invoice.evidenceSummary['SUBTOTAL_AMOUNT'] * 100, 1, 1)} + '% OCR confidence'"></div>
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label text-muted small mb-1">Subtotal</label>
+                                    <input type="text" class="form-control invoice-field"
+                                           id="field-SUBTOTAL_AMOUNT"
+                                           data-field="SUBTOTAL_AMOUNT"
+                                           th:value="${invoice.subtotalAmount}"
+                                           th:classappend="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null and invoice.evidenceSummary['SUBTOTAL_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''"
+                                           th:title="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['SUBTOTAL_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small">Tax</label>
-                                    <div class="input-group has-validation">
-                                        <input type="text" class="form-control invoice-field"
-                                               id="field-TAX_AMOUNT"
-                                               data-field="TAX_AMOUNT"
-                                               th:value="${invoice.taxAmount}"
-                                               th:classappend="${invoice.evidenceSummary['TAX_AMOUNT'] != null and invoice.evidenceSummary['TAX_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''">
-                                        <span class="input-group-text confidence-indicator"
-                                              id="conf-TAX_AMOUNT"
-                                              th:title="${invoice.evidenceSummary['TAX_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['TAX_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'"
-                                              th:classappend="${invoice.evidenceSummary['TAX_AMOUNT'] != null and invoice.evidenceSummary['TAX_AMOUNT'] < 0.90} ? 'confidence-low' : 'confidence-ok'">
-                                            <i class="bi" th:classappend="${invoice.evidenceSummary['TAX_AMOUNT'] != null and invoice.evidenceSummary['TAX_AMOUNT'] < 0.90} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-                                        </span>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    <div class="form-text"
-                                         th:if="${invoice.evidenceSummary['TAX_AMOUNT'] != null}"
-                                         th:classappend="${invoice.evidenceSummary['TAX_AMOUNT'] < 0.90} ? 'text-danger' : 'text-success'"
-                                         th:text="${#numbers.formatDecimal(invoice.evidenceSummary['TAX_AMOUNT'] * 100, 1, 1)} + '% OCR confidence'"></div>
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label text-muted small mb-1">Tax</label>
+                                    <input type="text" class="form-control invoice-field"
+                                           id="field-TAX_AMOUNT"
+                                           data-field="TAX_AMOUNT"
+                                           th:value="${invoice.taxAmount}"
+                                           th:classappend="${invoice.evidenceSummary['TAX_AMOUNT'] != null and invoice.evidenceSummary['TAX_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''"
+                                           th:title="${invoice.evidenceSummary['TAX_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['TAX_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label text-muted small">Total</label>
-                                    <div class="input-group has-validation">
-                                        <input type="text" class="form-control invoice-field"
-                                               id="field-TOTAL_AMOUNT"
-                                               data-field="TOTAL_AMOUNT"
-                                               th:value="${invoice.totalAmount}"
-                                               th:classappend="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null and invoice.evidenceSummary['TOTAL_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''">
-                                        <span class="input-group-text confidence-indicator"
-                                              id="conf-TOTAL_AMOUNT"
-                                              th:title="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['TOTAL_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'"
-                                              th:classappend="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null and invoice.evidenceSummary['TOTAL_AMOUNT'] < 0.90} ? 'confidence-low' : 'confidence-ok'">
-                                            <i class="bi" th:classappend="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null and invoice.evidenceSummary['TOTAL_AMOUNT'] < 0.90} ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
-                                        </span>
-                                        <div class="invalid-feedback"></div>
-                                    </div>
-                                    <div class="form-text"
-                                         th:if="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null}"
-                                         th:classappend="${invoice.evidenceSummary['TOTAL_AMOUNT'] < 0.90} ? 'text-danger' : 'text-success'"
-                                         th:text="${#numbers.formatDecimal(invoice.evidenceSummary['TOTAL_AMOUNT'] * 100, 1, 1)} + '% OCR confidence'"></div>
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label text-muted small mb-1">Total</label>
+                                    <input type="text" class="form-control invoice-field"
+                                           id="field-TOTAL_AMOUNT"
+                                           data-field="TOTAL_AMOUNT"
+                                           th:value="${invoice.totalAmount}"
+                                           th:classappend="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null and invoice.evidenceSummary['TOTAL_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''"
+                                           th:title="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['TOTAL_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
+                                    <div class="invalid-feedback"></div>
                                 </div>
 
                             </div>
@@ -388,154 +311,96 @@
                     <hr class="my-4">
                     <h5 class="mb-3">Issues requiring attention</h5>
 
-                    <div class="card failure-card mb-3" th:each="failure : ${invoice.unresolvedFailures}"
+                    <!-- Duplicate cards: a different kind of decision (identity, not a value) — shown first. -->
+                    <div class="card border-danger mb-3"
+                         th:each="failure : ${invoice.unresolvedFailures}"
+                         th:if="${#strings.contains(failure.rule, 'DUPLICATE')}"
                          th:id="'failure-' + ${failure.id}">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <span class="badge bg-warning text-dark me-2" th:text="${failure.scope}">FIELD</span>
-                                    <strong th:text="${failure.fieldName ?: failure.rule}">TOTAL_AMOUNT</strong>
-                                </div>
-                                <span class="text-muted small" th:text="${failure.rule}">LOW_OCR_CONFIDENCE</span>
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+                                <span class="fw-semibold text-danger">Possible duplicate invoice</span>
                             </div>
-                            <p class="mt-2 mb-3 text-body-secondary" th:text="${failure.message}">
-                                OCR confidence was 61%, below the 90% threshold.
+                            <p class="text-muted small mb-3" th:text="${failure.message}">
+                                An invoice from Acme Supplies with number INV-20481 already exists.
                             </p>
 
-                            <div th:if="${failure.relatedInvoiceId != null}" class="mb-3">
-                                <a th:href="@{/invoices/{id}(id=${failure.relatedInvoiceId})}"
+                            <div class="d-flex gap-2 align-items-center flex-wrap">
+                                <a th:if="${failure.relatedInvoiceId != null}"
+                                   th:href="@{/invoices/{id}(id=${failure.relatedInvoiceId})}"
                                    target="_blank" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-arrow-up-right-square me-1"></i>View related invoice
+                                    <i class="bi bi-arrow-up-right-square me-1"></i>View existing invoice
                                 </a>
-                            </div>
-
-                            <div class="d-flex gap-2 flex-wrap align-items-center">
-
-                                <!-- DUPLICATE failures: confirm or dismiss -->
-                                <div th:if="${#strings.contains(failure.rule, 'DUPLICATE')}" class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-danger resolve-btn"
-                                            th:attr="data-failure-id=${failure.id}"
-                                            data-action="DUPLICATE_CONFIRMED">
-                                        <i class="bi bi-x-circle me-1"></i>Confirm duplicate
-                                    </button>
-                                    <button class="btn btn-sm btn-success resolve-btn"
-                                            th:attr="data-failure-id=${failure.id}"
-                                            data-action="DUPLICATE_DISMISSED">
-                                        <i class="bi bi-check-circle me-1"></i>Not a duplicate
-                                    </button>
-                                </div>
-
-                                <!-- INVOICE_FIELD failures: link to the field above, approve, or mark as fixed -->
-                                <div th:if="${!#strings.contains(failure.rule, 'DUPLICATE') and failure.scope.name() == 'INVOICE_FIELD'}"
-                                     class="d-flex gap-2 flex-wrap align-items-center">
-                                    <a th:href="'#field-' + ${failure.fieldName}"
-                                       class="btn btn-sm btn-outline-secondary go-to-field-link"
-                                       th:attr="data-field-name=${failure.fieldName}">
-                                        <i class="bi bi-arrow-up me-1"></i>Go to field ↑
-                                    </a>
-                                    <button class="btn btn-sm btn-success resolve-btn"
-                                            th:attr="data-failure-id=${failure.id}"
-                                            data-action="APPROVED">
-                                        <i class="bi bi-check me-1"></i>Looks correct
-                                    </button>
-                                    <button class="btn btn-sm btn-warning resolve-btn"
-                                            th:attr="data-failure-id=${failure.id},data-field-name=${failure.fieldName}"
-                                            data-action="CORRECTED">
-                                        <i class="bi bi-pencil-check me-1"></i>Mark as fixed
-                                    </button>
-                                </div>
-
-                                <!-- LINE_ITEM failures with a specific field: link to the row, approve, or correct inline -->
-                                <div th:if="${!#strings.contains(failure.rule, 'DUPLICATE') and failure.scope.name() == 'LINE_ITEM' and failure.fieldName != null}"
-                                     class="d-flex gap-2 flex-wrap align-items-center">
-                                    <a href="#" class="btn btn-sm btn-outline-secondary go-to-line-item-link"
-                                       th:attr="data-line-item-id=${failure.lineItemId}">
-                                        <i class="bi bi-arrow-up me-1"></i>Go to line item ↑
-                                    </a>
-                                    <button class="btn btn-sm btn-success resolve-btn"
-                                            th:attr="data-failure-id=${failure.id}"
-                                            data-action="APPROVED">
-                                        <i class="bi bi-check me-1"></i>Looks correct
-                                    </button>
-                                    <div class="d-inline-flex gap-2 align-items-center">
-                                        <input type="text" class="form-control form-control-sm correction-input"
-                                               th:id="'correction-' + ${failure.id}"
-                                               th:attr="data-failure-id=${failure.id}"
-                                               placeholder="Enter corrected value">
-                                        <button class="btn btn-sm btn-warning correct-btn"
-                                                th:attr="data-failure-id=${failure.id},data-line-item-id=${failure.lineItemId}"
-                                                data-action="CORRECTED">
-                                            <i class="bi bi-pencil me-1"></i>Correct
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Fieldless LINE_ITEM failures (e.g. LINE_TOTAL_MISMATCH, MISSING_LINE_ITEM_AMOUNT):
-                                     no single field is flagged, but the rule implies Amount, and the row itself is
-                                     editable above — link to it and let "Mark as fixed" pick up whatever value is
-                                     currently in that row's Amount input, rather than leaving "Looks correct" as
-                                     the only, misleading option. -->
-                                <div th:if="${!#strings.contains(failure.rule, 'DUPLICATE') and failure.scope.name() == 'LINE_ITEM' and failure.fieldName == null and failure.lineItemId != null}"
-                                     class="d-flex gap-2 flex-wrap align-items-center">
-                                    <a href="#" class="btn btn-sm btn-outline-secondary go-to-line-item-link"
-                                       th:attr="data-line-item-id=${failure.lineItemId}">
-                                        <i class="bi bi-arrow-up me-1"></i>Go to line item ↑
-                                    </a>
-                                    <button class="btn btn-sm btn-success resolve-btn"
-                                            th:attr="data-failure-id=${failure.id}"
-                                            data-action="APPROVED">
-                                        <i class="bi bi-check me-1"></i>Looks correct
-                                    </button>
-                                    <button class="btn btn-sm btn-warning resolve-btn"
-                                            th:attr="data-failure-id=${failure.id},data-line-item-id=${failure.lineItemId}"
-                                            data-action="CORRECTED">
-                                        <i class="bi bi-pencil-check me-1"></i>Mark as fixed
-                                    </button>
-                                </div>
-
-                                <!-- SUBTOTAL_MISMATCH / TOTAL_RECONCILIATION: INVOICE-scope, but each clearly implicates
-                                     one header field — link to it, and let "Mark as fixed" pick up whatever value is
-                                     currently in that field, rather than leaving "Looks correct" as the only option. -->
-                                <div th:if="${!#strings.contains(failure.rule, 'DUPLICATE') and failure.scope.name() == 'INVOICE' and (failure.rule == 'SUBTOTAL_MISMATCH' or failure.rule == 'TOTAL_RECONCILIATION')}"
-                                     class="d-flex gap-2 flex-wrap align-items-center">
-                                    <a th:href="${failure.rule == 'SUBTOTAL_MISMATCH'} ? '#field-SUBTOTAL_AMOUNT' : '#field-TOTAL_AMOUNT'"
-                                       class="btn btn-sm btn-outline-secondary go-to-field-link"
-                                       th:attr="data-field-name=${failure.rule == 'SUBTOTAL_MISMATCH' ? 'SUBTOTAL_AMOUNT' : 'TOTAL_AMOUNT'}">
-                                        <i class="bi bi-arrow-up me-1"></i>Go to field ↑
-                                    </a>
-                                    <button class="btn btn-sm btn-success resolve-btn"
-                                            th:attr="data-failure-id=${failure.id}"
-                                            data-action="APPROVED">
-                                        <i class="bi bi-check me-1"></i>Looks correct
-                                    </button>
-                                    <button class="btn btn-sm btn-warning resolve-btn"
-                                            th:attr="data-failure-id=${failure.id},data-field-name=${failure.rule == 'SUBTOTAL_MISMATCH' ? 'SUBTOTAL_AMOUNT' : 'TOTAL_AMOUNT'}"
-                                            data-action="CORRECTED">
-                                        <i class="bi bi-pencil-check me-1"></i>Mark as fixed
-                                    </button>
-                                </div>
-
-                                <!-- Anything else INVOICE-scope with no specific field to point to: approve only -->
-                                <div th:if="${!#strings.contains(failure.rule, 'DUPLICATE') and failure.scope.name() == 'INVOICE' and failure.rule != 'SUBTOTAL_MISMATCH' and failure.rule != 'TOTAL_RECONCILIATION'}">
-                                    <button class="btn btn-sm btn-success resolve-btn"
-                                            th:attr="data-failure-id=${failure.id}"
-                                            data-action="APPROVED">
-                                        <i class="bi bi-check me-1"></i>Looks correct
-                                    </button>
-                                </div>
-
+                                <button class="btn btn-sm btn-outline-success resolve-btn"
+                                        th:attr="data-failure-id=${failure.id}"
+                                        data-action="DUPLICATE_DISMISSED"
+                                        title="This is a different invoice — continue processing it">
+                                    This is a different invoice
+                                </button>
+                                <button class="btn btn-sm btn-danger resolve-btn"
+                                        th:attr="data-failure-id=${failure.id}"
+                                        data-action="DUPLICATE_CONFIRMED"
+                                        title="This is indeed a duplicate — reject it from the system">
+                                    Yes, reject this duplicate
+                                </button>
                             </div>
 
                             <div class="mt-2 resolution-indicator d-none" th:id="'resolved-indicator-' + ${failure.id}">
-                                <span class="text-success">
+                                <span class="text-success small">
                                     <i class="bi bi-check-circle-fill me-1"></i>
-                                    <span class="resolution-text">Marked as resolved</span>
+                                    <span class="resolution-text"></span>
                                 </span>
-                                <button class="btn btn-sm btn-link text-decoration-none undo-resolution-btn"
-                                        type="button" disabled
-                                        th:attr="data-failure-id=${failure.id}">
-                                    Undo
+                                <a href="#" class="ms-2 small text-muted undo-link" th:attr="data-failure-id=${failure.id}">Undo</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Every other failure asks one question: is this value correct, yes or no (with a fix)? -->
+                    <div class="card failure-card mb-3"
+                         th:each="failure : ${invoice.unresolvedFailures}"
+                         th:unless="${#strings.contains(failure.rule, 'DUPLICATE')}"
+                         th:id="'failure-' + ${failure.id}">
+                        <div class="card-body py-3">
+
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-semibold"
+                                      th:text="${failure.fieldName != null} ? ${#strings.replace(failure.fieldName.name(), '_', ' ')} : (${failure.scope.name() == 'LINE_ITEM'} ? 'Line item' : ${#strings.replace(failure.rule, '_', ' ')})">
+                                    TOTAL AMOUNT
+                                </span>
+                                <span class="badge bg-light text-muted border small" th:text="${failure.rule}">LOW_OCR_CONFIDENCE</span>
+                            </div>
+
+                            <p class="text-muted small mb-3" th:text="${failure.message}">
+                                OCR confidence was 61%, below the 90% threshold.
+                            </p>
+
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="text-muted small me-1">Is this correct?</span>
+                                <button class="btn btn-sm btn-success resolve-btn"
+                                        th:attr="data-failure-id=${failure.id}"
+                                        data-action="APPROVED"
+                                        title="The extracted value is correct — approve it">
+                                    Yes, looks right
                                 </button>
+                                <span class="text-muted small">or correct it:</span>
+                                <input type="text" class="form-control form-control-sm correction-input" style="width: 160px"
+                                       th:id="'correction-' + ${failure.id}"
+                                       th:attr="data-failure-id=${failure.id}"
+                                       placeholder="Enter correct value">
+                                <button class="btn btn-sm btn-warning correct-btn"
+                                        th:attr="data-failure-id=${failure.id}"
+                                        data-action="CORRECTED"
+                                        title="Replace the extracted value with what you entered">
+                                    Save
+                                </button>
+                            </div>
+
+                            <div class="mt-2 resolution-indicator d-none" th:id="'resolved-indicator-' + ${failure.id}">
+                                <span class="text-success small">
+                                    <i class="bi bi-check-circle-fill me-1"></i>
+                                    <span class="resolution-text"></span>
+                                </span>
+                                <a href="#" class="ms-2 small text-muted undo-link" th:attr="data-failure-id=${failure.id}">Undo</a>
                             </div>
                         </div>
                     </div>
