@@ -1,34 +1,27 @@
 package com.zamp.invoice.controller;
 
 import com.zamp.invoice.domain.Invoice;
-import com.zamp.invoice.domain.InvoiceStatus;
-import com.zamp.invoice.dto.InvoiceDetailResponse;
-import com.zamp.invoice.dto.InvoiceListResponse;
 import com.zamp.invoice.dto.InvoiceUploadResponse;
 import com.zamp.invoice.exception.UnsupportedFileTypeException;
 import com.zamp.invoice.service.ExtractionPipelineService;
 import com.zamp.invoice.service.InvoiceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Set;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/invoices")
 public class InvoiceController {
 
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("application/pdf", "image/jpeg", "image/png", "image/tiff");
-    private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "application/pdf", "image/jpeg", "image/png", "image/tiff"
+    );
 
     private final InvoiceService invoiceService;
     private final ExtractionPipelineService extractionPipelineService;
@@ -58,24 +51,5 @@ public class InvoiceController {
                 .build();
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<InvoiceDetailResponse> getInvoice(@PathVariable("id") UUID id) {
-        return ResponseEntity.ok(invoiceService.getInvoice(id));
-    }
-
-    @GetMapping
-    public ResponseEntity<InvoiceListResponse> listInvoices(
-            @RequestParam(value = "status", required = false) InvoiceStatus status,
-            @RequestParam(value = "vendor", required = false) String vendor,
-            @RequestParam(value = "dateFrom", required = false) LocalDate dateFrom,
-            @RequestParam(value = "dateTo", required = false) LocalDate dateTo,
-            @RequestParam(value = "amountMin", required = false) BigDecimal amountMin,
-            @RequestParam(value = "amountMax", required = false) BigDecimal amountMax,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size) {
-        int cappedSize = Math.min(size, MAX_PAGE_SIZE);
-        return ResponseEntity.ok(invoiceService.listInvoices(status, vendor, dateFrom, dateTo, amountMin, amountMax, page, cappedSize));
     }
 }

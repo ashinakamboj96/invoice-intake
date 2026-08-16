@@ -18,4 +18,6 @@ public interface ValidationFailureRepository extends JpaRepository<ValidationFai
     boolean existsByInvoiceIdAndRelatedInvoiceIdAndAction(UUID invoiceId, UUID relatedInvoiceId, ReviewActionType action);
 
     int countByInvoiceIdAndResolvedFalse(UUID invoiceId);
+
+    List<ValidationFailure> findByInvoiceIdAndAction(UUID invoiceId, ReviewActionType action);
 }

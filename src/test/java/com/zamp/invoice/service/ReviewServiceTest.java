@@ -199,4 +199,57 @@ class ReviewServiceTest {
         assertThat(response.getNewFailures()).noneMatch(f -> f.getRule().equals("SUBTOTAL_MISMATCH"));
         verify(validationEngine).validate(eq(invoiceId), argThat(set -> set.contains("SUBTOTAL_MISMATCH")));
     }
+
+    @Test
+    void previouslyApprovedRuleIsNotResurrectedByALaterRoundsRevalidation() {
+        UUID invoiceId = UUID.randomUUID();
+        UUID lowConfidenceFailureId = UUID.randomUUID();
+        UUID ocrSourceFailureId = UUID.randomUUID();
+        Invoice invoice = Invoice.builder().id(invoiceId).status(InvoiceStatus.NEEDS_REVIEW).build();
+
+        ValidationFailure lowConfidenceFailure = ValidationFailure.builder()
+                .id(lowConfidenceFailureId).scope(ValidationScope.INVOICE_FIELD).fieldName(FieldName.TOTAL_AMOUNT)
+                .rule("LOW_OCR_CONFIDENCE").message("low confidence").resolved(false).build();
+        ValidationFailure ocrSourceFailure = ValidationFailure.builder()
+                .id(ocrSourceFailureId).scope(ValidationScope.LINE_ITEM).lineItemId(UUID.randomUUID())
+                .fieldName(FieldName.DESCRIPTION).rule("OCR_SOURCE_NOT_FOUND").message("source not found").resolved(false).build();
+
+        when(invoiceRepository.findById(invoiceId)).thenReturn(Optional.of(invoice));
+        when(validationFailureRepository.findByInvoiceIdAndResolvedFalse(invoiceId))
+                .thenReturn(List.of(lowConfidenceFailure))
+                .thenReturn(List.of(ocrSourceFailure))
+                .thenReturn(List.of(ocrSourceFailure))
+                .thenReturn(List.of());
+        doAnswer(inv -> {
+            invoice.setStatus(InvoiceStatus.NEEDS_REVIEW);
+            return null;
+        }).doAnswer(inv -> {
+            invoice.setStatus(InvoiceStatus.ACCEPTED);
+            return null;
+        }).when(validationEngine).validate(eq(invoiceId), any());
+
+        // Round 1: approve LOW_OCR_CONFIDENCE; OCR_SOURCE_NOT_FOUND re-fires, nothing approved previously.
+        when(validationFailureRepository.findByInvoiceIdAndAction(invoiceId, ReviewActionType.APPROVED))
+                .thenReturn(List.of());
+        CompleteReviewRequest round1 = requestWith(
+                new CompleteReviewRequest.FailureResolution(lowConfidenceFailureId, ReviewActionType.APPROVED, null));
+        CompleteReviewResponse round1Response = reviewService.completeReview(invoiceId, round1);
+
+        assertThat(round1Response.getStatus()).isEqualTo(InvoiceStatus.NEEDS_REVIEW);
+        assertThat(round1Response.getNewFailures()).anyMatch(f -> f.getRule().equals("OCR_SOURCE_NOT_FOUND"));
+        verify(validationEngine).validate(eq(invoiceId), argThat(set ->
+                set.contains("LOW_OCR_CONFIDENCE") && !set.contains("OCR_SOURCE_NOT_FOUND")));
+
+        // Round 2: approve OCR_SOURCE_NOT_FOUND; LOW_OCR_CONFIDENCE was approved last round and must stay skipped.
+        when(validationFailureRepository.findByInvoiceIdAndAction(invoiceId, ReviewActionType.APPROVED))
+                .thenReturn(List.of(lowConfidenceFailure));
+        CompleteReviewRequest round2 = requestWith(
+                new CompleteReviewRequest.FailureResolution(ocrSourceFailureId, ReviewActionType.APPROVED, null));
+        CompleteReviewResponse round2Response = reviewService.completeReview(invoiceId, round2);
+
+        assertThat(round2Response.getStatus()).isEqualTo(InvoiceStatus.ACCEPTED);
+        assertThat(round2Response.getNewFailures()).isEmpty();
+        verify(validationEngine).validate(eq(invoiceId), argThat(set ->
+                set.contains("LOW_OCR_CONFIDENCE") && set.contains("OCR_SOURCE_NOT_FOUND")));
+    }
 }

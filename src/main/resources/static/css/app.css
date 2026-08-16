@@ -1,0 +1,44 @@
+.status-badge-PROCESSING  { background-color: #6c757d; }
+.status-badge-ACCEPTED    { background-color: #198754; }
+.status-badge-NEEDS_REVIEW { background-color: #ffc107; color: #000; }
+.status-badge-FAILED      { background-color: #dc3545; }
+.status-badge-REJECTED    { background-color: #6f42c1; }
+
+.failure-card { border-left: 4px solid #ffc107; }
+.failure-card.resolved { border-left-color: #198754; opacity: 0.6; }
+.confidence-low { color: #dc3545; font-weight: 600; }
+.confidence-ok  { color: #198754; }
+
+.invoice-split-left {
+    position: sticky;
+    top: 1rem;
+    height: calc(100vh - 5rem);
+    overflow: hidden;
+}
+
+.invoice-split-left iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.upload-dropzone {
+    border: 2px dashed #adb5bd;
+    border-radius: 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+}
+
+.upload-dropzone.dragover {
+    border-color: #0d6efd;
+    background-color: #f0f6ff;
+}
+
+.field-low-confidence {
+    border-color: #ffc107 !important;
+    background-color: #fff9e6;
+}
+.field-low-confidence:focus {
+    border-color: #ffc107 !important;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}

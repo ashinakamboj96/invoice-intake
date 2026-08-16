@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -88,8 +89,8 @@ public class ReviewService {
         applyResolutions(invoice, unresolvedFailures, failuresById, resolutions);
         invoiceRepository.save(invoice);
 
-        Set<String> approvedRules = collectApprovedRules(resolutions, failuresById);
-        return revalidateAndBuildResponse(invoiceId, approvedRules);
+        Set<String> skipRules = collectSkipRules(invoiceId, resolutions, failuresById);
+        return revalidateAndBuildResponse(invoiceId, skipRules);
     }
 
     private Invoice fetchInvoiceInReview(UUID invoiceId) {
@@ -263,18 +264,35 @@ public class ReviewService {
         }
     }
 
-    private Set<String> collectApprovedRules(List<CompleteReviewRequest.FailureResolution> resolutions,
-                                              Map<UUID, ValidationFailure> failuresById) {
-        return resolutions.stream()
+    /**
+     * Rules to skip on revalidation: those approved in this request, plus any approved in an
+     * earlier {@code completeReview} call on this invoice. Without the latter, a rule approved in
+     * a previous round has no memory across requests and can re-fire indefinitely whenever a
+     * different failure's resolution triggers revalidation.
+     */
+    private Set<String> collectSkipRules(UUID invoiceId,
+                                          List<CompleteReviewRequest.FailureResolution> resolutions,
+                                          Map<UUID, ValidationFailure> failuresById) {
+        Set<String> approvedThisRound = resolutions.stream()
                 .filter(r -> r.getAction() == ReviewActionType.APPROVED)
                 .map(r -> failuresById.get(r.getFailureId()))
                 .filter(Objects::nonNull)
                 .map(ValidationFailure::getRule)
                 .collect(Collectors.toSet());
+
+        Set<String> approvedPreviously = validationFailureRepository
+                .findByInvoiceIdAndAction(invoiceId, ReviewActionType.APPROVED)
+                .stream()
+                .map(ValidationFailure::getRule)
+                .collect(Collectors.toSet());
+
+        Set<String> skipRules = new HashSet<>(approvedThisRound);
+        skipRules.addAll(approvedPreviously);
+        return skipRules;
     }
 
-    private CompleteReviewResponse revalidateAndBuildResponse(UUID invoiceId, Set<String> approvedRules) {
-        validationEngine.validate(invoiceId, approvedRules);
+    private CompleteReviewResponse revalidateAndBuildResponse(UUID invoiceId, Set<String> skipRules) {
+        validationEngine.validate(invoiceId, skipRules);
 
         List<ValidationFailure> remainingFailures = validationFailureRepository.findByInvoiceIdAndResolvedFalse(invoiceId);
         Invoice revalidatedInvoice = invoiceRepository.findById(invoiceId)

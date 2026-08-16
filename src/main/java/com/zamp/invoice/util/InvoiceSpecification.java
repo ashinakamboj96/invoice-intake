@@ -1,4 +1,4 @@
-package com.zamp.invoice.repository;
+package com.zamp.invoice.util;
 
 import com.zamp.invoice.domain.Invoice;
 import com.zamp.invoice.domain.InvoiceStatus;
@@ -19,7 +19,7 @@ public class InvoiceSpecification {
 
     public static Specification<Invoice> vendorContains(String vendor) {
         return (root, query, cb) ->
-                vendor == null ? null :
+                vendor == null || vendor.isBlank() ? null :
                         cb.like(cb.lower(root.get("vendorName")), "%" + vendor.toLowerCase() + "%");
     }
 

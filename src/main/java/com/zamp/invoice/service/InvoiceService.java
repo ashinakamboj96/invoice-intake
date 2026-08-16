@@ -1,9 +1,9 @@
 package com.zamp.invoice.service;
 
-import com.zamp.invoice.domain.ExtractionEvidence;
 import com.zamp.invoice.domain.Invoice;
 import com.zamp.invoice.domain.InvoiceLineItem;
 import com.zamp.invoice.domain.InvoiceStatus;
+import com.zamp.invoice.domain.ReviewActionType;
 import com.zamp.invoice.domain.ValidationFailure;
 import com.zamp.invoice.dto.InvoiceDetailResponse;
 import com.zamp.invoice.dto.InvoiceListItem;
@@ -14,8 +14,8 @@ import com.zamp.invoice.exception.InvoiceNotFoundException;
 import com.zamp.invoice.repository.ExtractionEvidenceRepository;
 import com.zamp.invoice.repository.InvoiceLineItemRepository;
 import com.zamp.invoice.repository.InvoiceRepository;
-import com.zamp.invoice.repository.InvoiceSpecification;
 import com.zamp.invoice.repository.ValidationFailureRepository;
+import com.zamp.invoice.util.InvoiceSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -92,6 +92,12 @@ public class InvoiceService {
                 .filter(evidence -> evidence.getOcrConfidence() != null)
                 .collect(Collectors.toMap(evidence -> evidence.getFieldName().name(), evidence -> evidence.getOcrConfidence().doubleValue()));
 
+        UUID relatedInvoiceId = allFailures.stream()
+                .filter(failure -> failure.getAction() == ReviewActionType.DUPLICATE_CONFIRMED)
+                .findFirst()
+                .map(failure -> failure.getRelatedInvoice() != null ? failure.getRelatedInvoice().getId() : null)
+                .orElse(null);
+
         return InvoiceDetailResponse.builder()
                 .id(invoice.getId())
                 .vendorName(invoice.getVendorName())
@@ -109,6 +115,7 @@ public class InvoiceService {
                 .unresolvedFailures(unresolvedFailures)
                 .resolvedFailures(resolvedFailures)
                 .evidenceSummary(evidenceSummary)
+                .relatedInvoiceId(relatedInvoiceId)
                 .build();
     }
 
