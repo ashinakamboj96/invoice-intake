@@ -2,9 +2,9 @@ spring:
   application:
     name: trusted-invoice-intake
   datasource:
-    url: jdbc:postgresql://localhost:5432/invoice_intake
-    username: ashinakamboj
-    password:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/invoice_intake}
+    username: ${SPRING_DATASOURCE_USERNAME:ashinakamboj}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -29,7 +29,7 @@ validation:
   min-text-length: 50
 
 ocr:
-  tessdata-path: /opt/homebrew/share/tessdata
+  tessdata-path: ${OCR_TESSDATA_PATH:/opt/homebrew/share/tessdata}
 
 async:
   core-pool-size: 2

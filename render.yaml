@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: invoice-intake
+    runtime: docker
+    plan: free
+    envVars:
+      - key: LLM_API_KEY
+        sync: false
+      - key: OCR_TESSDATA_PATH
+        value: /usr/share/tesseract-ocr/4.00/tessdata
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: invoice-intake-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: invoice-intake-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: invoice-intake-db
+          property: password
+
+databases:
+  - name: invoice-intake-db
+    plan: free
+    databaseName: invoice_intake
