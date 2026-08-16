@@ -2,8 +2,10 @@ package com.zamp.invoice.validation;
 
 import com.zamp.invoice.domain.Invoice;
 import com.zamp.invoice.domain.InvoiceStatus;
+import com.zamp.invoice.domain.ReviewActionType;
 import com.zamp.invoice.domain.ValidationFailure;
 import com.zamp.invoice.repository.InvoiceRepository;
+import com.zamp.invoice.repository.ValidationFailureRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,7 +22,8 @@ import static org.mockito.Mockito.when;
 class DuplicateDetectorTest {
 
     private final InvoiceRepository invoiceRepository = mock(InvoiceRepository.class);
-    private final DuplicateDetector detector = new DuplicateDetector(invoiceRepository);
+    private final ValidationFailureRepository validationFailureRepository = mock(ValidationFailureRepository.class);
+    private final DuplicateDetector detector = new DuplicateDetector(invoiceRepository, validationFailureRepository);
 
     private Invoice newInvoice() {
         return Invoice.builder()
@@ -77,5 +80,24 @@ class DuplicateDetectorTest {
         detector.detect(invoice);
 
         verify(invoiceRepository).findPotentialExactDuplicates(eq(invoice.getId()), any(), any(), any());
+    }
+
+    @Test
+    void previouslyDismissedDuplicateIsNotReFired() {
+        Invoice invoice = newInvoice();
+        Invoice candidate = Invoice.builder()
+                .id(UUID.randomUUID())
+                .vendorName("Acme Supplies Inc.")
+                .invoiceNumber("INV-20481")
+                .status(InvoiceStatus.NEEDS_REVIEW)
+                .build();
+        when(invoiceRepository.findPotentialExactDuplicates(any(), any(), any(), any())).thenReturn(List.of(candidate));
+        when(validationFailureRepository.existsByInvoiceIdAndRelatedInvoiceIdAndAction(
+                invoice.getId(), candidate.getId(), ReviewActionType.DUPLICATE_DISMISSED))
+                .thenReturn(true);
+
+        List<ValidationFailure> failures = detector.detect(invoice);
+
+        assertThat(failures).isEmpty();
     }
 }

@@ -16,6 +16,15 @@ public class LineItemValidator {
 
     private static final BigDecimal TOLERANCE = new BigDecimal("0.01");
 
+    /**
+     * Checks each line item's own arithmetic: {@code quantity × unitPrice} must match
+     * {@code amount} within a 0.01 tolerance (skipped if quantity or unit price is missing,
+     * since there's nothing to compute against), and every line item must have an amount at all.
+     *
+     * @param invoice   the parent invoice, referenced on each failure row
+     * @param lineItems the invoice's line items
+     * @return one failure per line item with a missing or mismatched amount; empty if all check out
+     */
     public List<ValidationFailure> validate(Invoice invoice, List<InvoiceLineItem> lineItems) {
         List<ValidationFailure> failures = new ArrayList<>();
 

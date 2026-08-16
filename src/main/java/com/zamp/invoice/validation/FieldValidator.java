@@ -19,6 +19,15 @@ public class FieldValidator {
             "USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", "CHF", "SGD", "AED"
     );
 
+    /**
+     * Checks required invoice-level fields are present and, where applicable, well-formed:
+     * vendor name and total amount must be non-null, invoice date must be present, and currency
+     * (when present) must be a recognised ISO 4217 code.
+     *
+     * @param invoice  the invoice to check
+     * @param evidence unused; kept so this method matches the shared validator call signature
+     * @return one failure per rule that fired; empty if all fields are valid
+     */
     public List<ValidationFailure> validate(Invoice invoice, List<ExtractionEvidence> evidence) {
         List<ValidationFailure> failures = new ArrayList<>();
 

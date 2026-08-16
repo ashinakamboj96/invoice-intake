@@ -33,6 +33,19 @@ public class EvidenceMapper {
         this.extractionEvidenceRepository = extractionEvidenceRepository;
     }
 
+    /**
+     * Connects each LLM-extracted field value back to the OCR word(s) that produced it, so its
+     * OCR confidence can be tracked per field. Persists one {@link ExtractionEvidence} row per
+     * non-null invoice-level and line-item field — with a null {@code ocrConfidence} when no
+     * matching OCR word could be found, rather than omitting the row.
+     *
+     * @param invoiceId      the invoice these evidence rows belong to
+     * @param llmResult      the structured fields extracted by the LLM
+     * @param ocrWords       every word Tesseract found on the document, with position/confidence
+     * @param savedLineItems the already-persisted line items, matched to {@code llmResult}'s
+     *                       line items by line number
+     * @return the persisted evidence rows
+     */
     public List<ExtractionEvidence> map(UUID invoiceId,
                                          LlmInvoiceResult llmResult,
                                          List<OcrWord> ocrWords,

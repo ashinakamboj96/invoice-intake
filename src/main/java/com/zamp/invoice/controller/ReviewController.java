@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/invoices/{id}/review")
+@RequestMapping("/invoices/{id}")
 public class ReviewController {
 
     private final ReviewService reviewService;
@@ -26,12 +26,12 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    @GetMapping("/failures")
+    @GetMapping("/review/failures")
     public ResponseEntity<List<ValidationFailureDto>> getPendingFailures(@PathVariable("id") UUID id) {
         return ResponseEntity.ok(reviewService.getPendingFailures(id));
     }
 
-    @PostMapping
+    @PostMapping("/complete-review")
     public ResponseEntity<CompleteReviewResponse> completeReview(
             @PathVariable("id") UUID id,
             @Valid @RequestBody CompleteReviewRequest request) {

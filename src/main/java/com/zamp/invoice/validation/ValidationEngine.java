@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -52,7 +53,28 @@ public class ValidationEngine {
         this.duplicateDetector = duplicateDetector;
     }
 
+    /**
+     * Runs all validators against the invoice, persists any failures found, and sets the
+     * invoice's status to {@code ACCEPTED} or {@code NEEDS_REVIEW} accordingly (unless it's
+     * already {@code FAILED}, which is left untouched). Equivalent to
+     * {@link #validate(UUID, Set)} with no excluded rules.
+     *
+     * @param invoiceId the invoice to validate
+     */
     public void validate(UUID invoiceId) {
+        validate(invoiceId, Set.of());
+    }
+
+    /**
+     * Same as {@link #validate(UUID)}, but drops any failure whose {@code rule} is in
+     * {@code excludedRules} before persisting. Used when re-validating after a human has just
+     * approved specific rules during review, so those approved-but-not-fixed issues don't
+     * immediately reappear as new failures.
+     *
+     * @param invoiceId     the invoice to validate
+     * @param excludedRules rule names to exclude from the persisted results
+     */
+    public void validate(UUID invoiceId, Set<String> excludedRules) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new InvoiceNotFoundException(invoiceId));
         List<InvoiceLineItem> lineItems = invoiceLineItemRepository.findByInvoiceId(invoiceId);
@@ -65,10 +87,14 @@ public class ValidationEngine {
         failures.addAll(runValidator("InvoiceValidator", () -> invoiceValidator.validate(invoice, lineItems)));
         failures.addAll(runValidator("DuplicateDetector", () -> duplicateDetector.detect(invoice)));
 
-        validationFailureRepository.saveAll(failures);
+        List<ValidationFailure> filtered = failures.stream()
+                .filter(failure -> !excludedRules.contains(failure.getRule()))
+                .toList();
+
+        validationFailureRepository.saveAll(filtered);
 
         if (invoice.getStatus() != InvoiceStatus.FAILED) {
-            invoice.setStatus(failures.isEmpty() ? InvoiceStatus.ACCEPTED : InvoiceStatus.NEEDS_REVIEW);
+            invoice.setStatus(filtered.isEmpty() ? InvoiceStatus.ACCEPTED : InvoiceStatus.NEEDS_REVIEW);
             invoiceRepository.save(invoice);
         }
     }

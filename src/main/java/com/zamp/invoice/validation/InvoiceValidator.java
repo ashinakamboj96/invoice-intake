@@ -17,6 +17,17 @@ public class InvoiceValidator {
 
     private static final BigDecimal TOLERANCE = new BigDecimal("0.01");
 
+    /**
+     * Cross-checks invoice-level totals against the line items: the sum of line item amounts
+     * must match the extracted subtotal (when both exist), and subtotal + tax must match the
+     * extracted total (falling back to the line item sum when subtotal is missing) — both within
+     * a 0.01 tolerance.
+     *
+     * @param invoice   the invoice whose totals are being reconciled
+     * @param lineItems the invoice's line items, summed for comparison
+     * @return up to two failures (subtotal mismatch, total reconciliation); empty if there's
+     *         nothing to check or everything reconciles
+     */
     public List<ValidationFailure> validate(Invoice invoice, List<InvoiceLineItem> lineItems) {
         List<ValidationFailure> failures = new ArrayList<>();
 

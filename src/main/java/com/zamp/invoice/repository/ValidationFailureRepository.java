@@ -1,5 +1,6 @@
 package com.zamp.invoice.repository;
 
+import com.zamp.invoice.domain.ReviewActionType;
 import com.zamp.invoice.domain.ValidationFailure;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,5 +13,7 @@ public interface ValidationFailureRepository extends JpaRepository<ValidationFai
 
     List<ValidationFailure> findByInvoiceId(UUID invoiceId);
 
-    List<ValidationFailure> findByInvoiceIdAndResolved(UUID invoiceId, boolean resolved);
+    List<ValidationFailure> findByInvoiceIdAndResolvedFalse(UUID invoiceId);
+
+    boolean existsByInvoiceIdAndRelatedInvoiceIdAndAction(UUID invoiceId, UUID relatedInvoiceId, ReviewActionType action);
 }

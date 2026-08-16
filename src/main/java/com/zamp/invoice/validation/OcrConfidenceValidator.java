@@ -24,6 +24,18 @@ public class OcrConfidenceValidator {
         this.validationConfig = validationConfig;
     }
 
+    /**
+     * Flags every OCR-sourced field whose confidence is below
+     * {@link ValidationConfig#getOcrConfidenceThreshold()}, or whose source word couldn't be
+     * located at all. No-op for {@code PDF_TEXT} invoices, since there's no OCR confidence to
+     * check.
+     *
+     * @param invoice   the invoice being checked; only acted on when its extraction method is OCR
+     * @param evidence  the OCR evidence rows collected for this invoice
+     * @param lineItems unused; kept so this method matches the shared validator call signature
+     * @return one failure per low/missing-confidence evidence row; empty for non-OCR invoices
+     *         or when every field met the threshold
+     */
     public List<ValidationFailure> validate(Invoice invoice, List<ExtractionEvidence> evidence, List<InvoiceLineItem> lineItems) {
         if (invoice.getExtractionMethod() != ExtractionMethod.OCR) {
             return List.of();
