@@ -59,24 +59,6 @@
                             th:text="${s}"
                             th:selected="${s == currentStatus}"></option>
                 </select>
-                <div class="mt-1" style="font-size:0.72rem; line-height:1.8">
-                    <span class="me-2">
-                        <span class="badge bg-success" style="font-size:0.65rem">ACCEPTED</span>
-                        Verified and trusted
-                    </span>
-                    <span class="me-2">
-                        <span class="badge bg-warning text-dark" style="font-size:0.65rem">NEEDS REVIEW</span>
-                        Requires your attention
-                    </span>
-                    <span class="me-2">
-                        <span class="badge bg-danger" style="font-size:0.65rem">FAILED</span>
-                        Could not be processed
-                    </span>
-                    <span>
-                        <span class="badge bg-secondary" style="font-size:0.65rem">REJECTED</span>
-                        Confirmed duplicate
-                    </span>
-                </div>
             </div>
             <div class="col-md-2">
                 <label class="form-label small text-muted mb-1" for="vendor">Vendor</label>
@@ -124,6 +106,27 @@
                 </button>
                 <a th:href="@{/}" class="btn btn-sm btn-outline-secondary flex-fill">Clear</a>
             </div>
+        </div>
+
+        <div style="border-top: 0.5px solid var(--bs-border-color);
+                    padding-top: 10px; margin-top: 4px;
+                    display: flex; flex-wrap: wrap; gap: 10px;">
+            <span class="d-inline-flex align-items-center gap-1" style="font-size: 12px;">
+                <span class="badge bg-success" style="font-size: 11px;">ACCEPTED</span>
+                <span class="text-muted">Verified</span>
+            </span>
+            <span class="d-inline-flex align-items-center gap-1" style="font-size: 12px;">
+                <span class="badge bg-warning text-dark" style="font-size: 11px;">NEEDS REVIEW</span>
+                <span class="text-muted">Needs attention</span>
+            </span>
+            <span class="d-inline-flex align-items-center gap-1" style="font-size: 12px;">
+                <span class="badge bg-danger" style="font-size: 11px;">FAILED</span>
+                <span class="text-muted">Not processed</span>
+            </span>
+            <span class="d-inline-flex align-items-center gap-1" style="font-size: 12px;">
+                <span class="badge bg-secondary" style="font-size: 11px;">REJECTED</span>
+                <span class="text-muted">Duplicate</span>
+            </span>
         </div>
     </form>
 
