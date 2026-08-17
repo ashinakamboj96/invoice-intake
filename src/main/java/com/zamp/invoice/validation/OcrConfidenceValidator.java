@@ -34,7 +34,8 @@ public class OcrConfidenceValidator {
      *
      * @param invoice   the invoice being checked; only acted on when its extraction method is OCR
      * @param evidence  the OCR evidence rows collected for this invoice
-     * @param lineItems unused; kept so this method matches the shared validator call signature
+     * @param lineItems the invoice's line items, used to include the extracted value for
+     *                  line-item-scoped fields in the message (e.g. "Quantity was read as \"30\"")
      * @return one failure per low/missing-confidence evidence row; empty for non-OCR invoices
      *         or when every field met the threshold
      */
@@ -57,17 +58,49 @@ public class OcrConfidenceValidator {
             }
 
             String label = toHumanLabel(row.getFieldName());
+            String extractedValue = getExtractedValue(row.getFieldName(), invoice, lineItems, row.getLineItemId());
+            String valueDisplay = extractedValue != null ? extractedValue : "unknown";
             if (confidence == null) {
-                failures.add(buildFailure(invoice, row, "OCR_SOURCE_NOT_FOUND",
-                        label + " could not be located in the scanned document. Please verify this value is correct."));
+                String message = String.format(
+                        "%s was read as \"%s\" but could not be located in the scanned document. Please verify this value is correct.",
+                        label, valueDisplay);
+                failures.add(buildFailure(invoice, row, "OCR_SOURCE_NOT_FOUND", message));
             } else if (confidence.compareTo(threshold) < 0) {
-                String message = label + " was read with " + toPercent(confidence) + "% confidence (our threshold is "
-                        + toPercent(threshold) + "%). Please check this value against the original document and correct it if needed.";
+                String message = String.format(
+                        "%s was read as \"%s\" with %s%% confidence (our threshold is %s%%). "
+                                + "Please check this value against the original document and correct it if needed.",
+                        label, valueDisplay, toPercent(confidence), toPercent(threshold));
                 failures.add(buildFailure(invoice, row, "LOW_OCR_CONFIDENCE", message));
             }
         }
 
         return failures;
+    }
+
+    private String getExtractedValue(FieldName fieldName, Invoice invoice, List<InvoiceLineItem> lineItems, UUID lineItemId) {
+        if (lineItemId != null) {
+            return lineItems.stream()
+                    .filter(li -> li.getId().equals(lineItemId))
+                    .findFirst()
+                    .map(li -> switch (fieldName) {
+                        case DESCRIPTION -> li.getDescription();
+                        case QUANTITY -> li.getQuantity() != null ? li.getQuantity().toPlainString() : null;
+                        case UNIT_PRICE -> li.getUnitPrice() != null ? li.getUnitPrice().toPlainString() : null;
+                        case AMOUNT -> li.getAmount() != null ? li.getAmount().toPlainString() : null;
+                        default -> null;
+                    })
+                    .orElse(null);
+        }
+        return switch (fieldName) {
+            case VENDOR_NAME -> invoice.getVendorName();
+            case INVOICE_NUMBER -> invoice.getInvoiceNumber();
+            case INVOICE_DATE -> invoice.getInvoiceDate() != null ? invoice.getInvoiceDate().toString() : null;
+            case CURRENCY -> invoice.getCurrency();
+            case SUBTOTAL_AMOUNT -> invoice.getSubtotalAmount() != null ? invoice.getSubtotalAmount().toPlainString() : null;
+            case TAX_AMOUNT -> invoice.getTaxAmount() != null ? invoice.getTaxAmount().toPlainString() : null;
+            case TOTAL_AMOUNT -> invoice.getTotalAmount() != null ? invoice.getTotalAmount().toPlainString() : null;
+            default -> null;
+        };
     }
 
     private String toHumanLabel(FieldName fieldName) {
