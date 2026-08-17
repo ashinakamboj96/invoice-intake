@@ -310,3 +310,79 @@ the pattern already used everywhere else in the review screen.
 - **Vendor-specific parsers:** cross-extraction agreement
   via normalized text matching is sufficient and avoids
   maintaining a parser per vendor layout.
+
+---
+
+## UX: Failure cards ask one question, not show mechanism
+
+**Decision:** Each failure card asks "Is this correct?" with two
+answers: approve or correct. Removed scope badges (INVOICE_FIELD,
+LINE_ITEM), "Go to field" buttons, and technical rule names from
+the visible UI.
+
+**Reasoning:** A finance user doesn't know what "OCR source word
+could not be located" means. Showing mechanism instead of guidance
+creates confusion. The rule name is still available as a badge
+(small, right-aligned) for engineers who need it, but it's not
+the primary information.
+
+---
+
+## UX: Field edits in the extracted fields panel are saved on Complete Review
+
+**Decision:** The user can edit any extracted field directly in
+the fields panel, not just through failure cards. All edits are
+collected on Complete Review submission and applied before
+revalidation.
+
+**Reasoning:** Validation only surfaces fields the system is
+uncertain about. A user may spot an error in a field that passed
+validation — they should be able to fix it without the system
+needing to have flagged it first. Restricting edits to failure
+cards would mean the system's uncertainty defines the boundary
+of what the user can do, which is backwards.
+
+---
+
+## Duplicate detection: one failure, one decision, permanent
+
+**Decision:** DuplicateDetector creates at most one failure per
+invoice (best matching candidate). Once a human makes any
+duplicate decision (dismissed or confirmed), duplicate detection
+never runs again for that invoice.
+
+**Reasoning:** Multiple duplicate failures for the same invoice
+(one per historical match) required the user to dismiss the same
+warning repeatedly — once for each prior upload of the same file.
+A single decision is sufficient: "this invoice is or isn't a
+duplicate." The system should respect that decision permanently.
+
+---
+
+## Validation messages: field-specific, plain English
+
+**Decision:** Every validation message names the specific field
+or line item it refers to, states the problem plainly, and tells
+the user what to do. Technical terms (OCR, confidence threshold,
+source word) are avoided in user-facing messages.
+
+**Reasoning:** "Our reading of this value wasn't very confident"
+does not tell a finance user which value, why it matters, or
+what to do next. "Total amount was read with 61% confidence —
+please check it against the original document" does all three.
+
+---
+
+## Processing invoices: separate section, not hidden, not mixed
+
+**Decision:** Invoices currently being processed appear in a
+separate "Processing" section above the main list, showing
+filename and upload time. They are excluded from the main ledger.
+The section auto-refreshes silently every 3 seconds.
+
+**Reasoning:** Hiding processing invoices entirely (original
+approach) removed useful feedback — the user couldn't tell if
+their upload was received. Showing them in the main list with
+empty fields looked broken. A separate section sets correct
+expectations: "something is happening" without polluting the
+trusted ledger with unverified records.

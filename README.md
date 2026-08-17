@@ -142,7 +142,7 @@ architectural choice.
 mvn test
 ```
 
-60 tests, focused on:
+66 tests, focused on:
 - Validation engine (arithmetic, format, duplicate detection)
 - Evidence mapping (OCR confidence to schema fields)
 - Review service (correction, revalidation, duplicate handling,
@@ -153,20 +153,14 @@ mvn test
 
 ---
 
-## Sample invoices for testing
+## Sample invoices
 
-Two ready-to-upload files are included in [`/samples`](samples) so
-you don't need to hunt for your own:
+The `samples/` folder contains four invoices for testing:
 
-| File | Path | What it exercises |
-|---|---|---|
-| Digital PDF invoice | `samples/digital-invoice.pdf` | `PDF_TEXT` extraction — clean data, reaches `ACCEPTED` immediately |
-| Scanned invoice photo | `samples/scanned-invoice.jpg` | OCR extraction with a genuine digit misread (line total) and a subtotal mismatch — lands on `NEEDS_REVIEW`, as shown in the screenshot above |
+- **`invoice_clean.pdf`** — should reach ACCEPTED immediately
+- **`invoice_line_mismatch.pdf`** — triggers arithmetic validation failures
+- **`invoice_missing_fields.pdf`** — triggers missing required field failures
+- **`invoice_scanned.jpg`** — tests the OCR path with confidence warnings
 
-Upload either through the web UI, or:
-```bash
-curl -X POST http://localhost:8080/invoices -F "file=@samples/digital-invoice.pdf"
-```
-
-Upload the same file twice to see `EXACT_DUPLICATE` flagged on
-the second upload.
+Upload all four at once to test bulk upload and the post-upload summary.
+Upload `invoice_clean.pdf` twice to test duplicate detection.
