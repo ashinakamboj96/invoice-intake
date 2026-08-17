@@ -383,7 +383,54 @@
                                 OCR confidence was 61%, below the 90% threshold.
                             </p>
 
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <!-- Multi-field failures (SUBTOTAL_MISMATCH, TOTAL_RECONCILIATION): no single field to
+                                 correct here — the fix happens in the fields panel above, and "I've fixed it" just
+                                 confirms it's done; the actual edited value(s) travel as field corrections. -->
+                            <div th:if="${failure.scope.name() == 'INVOICE' and !#strings.contains(failure.rule, 'DUPLICATE')}"
+                                 class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="text-muted small">Is this correct?</span>
+                                <button class="btn btn-sm btn-success resolve-btn"
+                                        th:attr="data-failure-id=${failure.id}"
+                                        data-action="APPROVED"
+                                        title="The values are correct as extracted">
+                                    Yes, looks right
+                                </button>
+                                <span class="text-muted small">or fix the values in the fields above, then</span>
+                                <button class="btn btn-sm btn-outline-success resolve-btn ive-fixed-it-btn"
+                                        th:attr="data-failure-id=${failure.id}"
+                                        data-scope="INVOICE"
+                                        data-action="APPROVED"
+                                        disabled
+                                        title="Edit the relevant fields above first, then click here">
+                                    <i class="bi bi-check me-1" aria-hidden="true"></i>I've fixed it
+                                </button>
+                            </div>
+
+                            <!-- LINE_TOTAL_MISMATCH: same idea, but the fix is in the line item row above. -->
+                            <div th:if="${failure.scope.name() == 'LINE_ITEM' and failure.rule == 'LINE_TOTAL_MISMATCH'}"
+                                 class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="text-muted small">Is this correct?</span>
+                                <button class="btn btn-sm btn-success resolve-btn"
+                                        th:attr="data-failure-id=${failure.id}"
+                                        data-action="APPROVED"
+                                        title="The line item values are correct as extracted">
+                                    Yes, looks right
+                                </button>
+                                <span class="text-muted small">or fix quantity, unit price, or amount in the line item above, then</span>
+                                <button class="btn btn-sm btn-outline-success resolve-btn ive-fixed-it-btn"
+                                        th:attr="data-failure-id=${failure.id},data-line-item-id=${failure.lineItemId}"
+                                        data-scope="LINE_ITEM"
+                                        data-action="APPROVED"
+                                        disabled
+                                        title="Edit the line item fields above first, then click here">
+                                    <i class="bi bi-check me-1" aria-hidden="true"></i>I've fixed it
+                                </button>
+                            </div>
+
+                            <!-- Single-field failures (INVOICE_FIELD, or LINE_ITEM rules other than LINE_TOTAL_MISMATCH
+                                 e.g. MISSING_LINE_ITEM_AMOUNT, LOW_OCR_CONFIDENCE): correction input stays. -->
+                            <div th:if="${failure.scope.name() == 'INVOICE_FIELD' or (failure.scope.name() == 'LINE_ITEM' and failure.rule != 'LINE_TOTAL_MISMATCH')}"
+                                 class="d-flex align-items-center gap-2 flex-wrap">
                                 <span class="text-muted small me-1">Is this correct?</span>
                                 <button class="btn btn-sm btn-success resolve-btn"
                                         th:attr="data-failure-id=${failure.id}"

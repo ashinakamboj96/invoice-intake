@@ -363,6 +363,50 @@ document.querySelectorAll('.correct-btn').forEach((btn) => {
     });
 });
 
+// "I've fixed it" (SUBTOTAL_MISMATCH/TOTAL_RECONCILIATION/LINE_TOTAL_MISMATCH cards) starts
+// disabled — there's nothing to confirm until the reviewer has actually edited one of the
+// relevant fields above. The click itself is handled by the generic .resolve-btn listener
+// above (it's an APPROVED resolve-btn); this only toggles the disabled state, since the
+// actual edited value(s) travel separately as field corrections on Complete Review.
+function wireFixedItButtons() {
+    document.querySelectorAll('.ive-fixed-it-btn').forEach((btn) => {
+        const scope = btn.dataset.scope;
+        const lineItemId = btn.dataset.lineItemId;
+
+        if (scope === 'INVOICE') {
+            const watchFields = ['SUBTOTAL_AMOUNT', 'TAX_AMOUNT', 'TOTAL_AMOUNT'];
+            watchFields.forEach((fieldName) => {
+                const input = document.getElementById('field-' + fieldName);
+                input?.addEventListener('input', () => {
+                    const anyChanged = watchFields.some((f) => {
+                        const el = document.getElementById('field-' + f);
+                        return el && el.value.trim() !== (el.dataset.originalValue ?? '');
+                    });
+                    btn.disabled = !anyChanged;
+                });
+            });
+        }
+
+        if (scope === 'LINE_ITEM' && lineItemId) {
+            const watchFields = ['QUANTITY', 'UNIT_PRICE', 'AMOUNT'];
+            watchFields.forEach((fieldName) => {
+                const input = document.querySelector(
+                    `.line-item-field[data-line-item-id="${lineItemId}"][data-field="${fieldName}"]`);
+                input?.addEventListener('input', () => {
+                    const anyChanged = watchFields.some((f) => {
+                        const el = document.querySelector(
+                            `.line-item-field[data-line-item-id="${lineItemId}"][data-field="${f}"]`);
+                        return el && el.value.trim() !== (el.dataset.originalValue ?? '');
+                    });
+                    btn.disabled = !anyChanged;
+                });
+            });
+        }
+    });
+}
+
+wireFixedItButtons();
+
 function recordResolution(failureId, action, fieldName, lineItemId) {
     // Every card's correction, invoice-field or line-item, now comes from its own inline input —
     // the backend resolves which field a fieldless failure (e.g. LINE_TOTAL_MISMATCH) implies.
