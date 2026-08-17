@@ -143,6 +143,30 @@ class DuplicateDetectorTest {
     }
 
     @Test
+    void priorDuplicateDismissedDecisionSkipsDetectionEntirely() {
+        Invoice invoice = newInvoice();
+        when(validationFailureRepository.existsByInvoiceIdAndActionIn(
+                eq(invoice.getId()), argThat(actions -> actions.contains(ReviewActionType.DUPLICATE_DISMISSED))))
+                .thenReturn(true);
+
+        List<ValidationFailure> failures = detector.detect(invoice);
+
+        assertThat(failures).isEmpty();
+    }
+
+    @Test
+    void priorDuplicateConfirmedDecisionSkipsDetectionEntirely() {
+        Invoice invoice = newInvoice();
+        when(validationFailureRepository.existsByInvoiceIdAndActionIn(
+                eq(invoice.getId()), argThat(actions -> actions.contains(ReviewActionType.DUPLICATE_CONFIRMED))))
+                .thenReturn(true);
+
+        List<ValidationFailure> failures = detector.detect(invoice);
+
+        assertThat(failures).isEmpty();
+    }
+
+    @Test
     void previouslyDismissedDuplicateIsNotReFired() {
         Invoice invoice = newInvoice();
         Invoice candidate = Invoice.builder()

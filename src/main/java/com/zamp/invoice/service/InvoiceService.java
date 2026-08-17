@@ -5,6 +5,7 @@ import com.zamp.invoice.model.entity.Invoice;
 import com.zamp.invoice.model.entity.InvoiceLineItem;
 import com.zamp.invoice.enums.InvoiceStatus;
 import com.zamp.invoice.enums.ReviewActionType;
+import com.zamp.invoice.enums.ValidationScope;
 import com.zamp.invoice.model.entity.ValidationFailure;
 import com.zamp.invoice.model.dto.InvoiceDetailResponse;
 import com.zamp.invoice.model.dto.InvoiceListItem;
@@ -35,6 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -85,7 +87,10 @@ public class InvoiceService {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new InvoiceNotFoundException(invoiceId));
 
-        List<LineItemDto> lineItems = invoiceLineItemRepository.findByInvoiceId(invoiceId).stream()
+        List<InvoiceLineItem> lineItemEntities = invoiceLineItemRepository.findByInvoiceId(invoiceId);
+        Map<UUID, InvoiceLineItem> lineItemsById = lineItemEntities.stream()
+                .collect(Collectors.toMap(InvoiceLineItem::getId, Function.identity()));
+        List<LineItemDto> lineItems = lineItemEntities.stream()
                 .map(this::toLineItemDto)
                 .toList();
 
@@ -96,11 +101,11 @@ public class InvoiceService {
         List<ValidationFailureDto> unresolvedFailures = allFailures.stream()
                 .filter(failure -> !failure.isResolved())
                 .sorted(Comparator.comparingInt(failure -> failurePriority(failure.getRule())))
-                .map(ValidationFailureDto::from)
+                .map(failure -> toFailureDto(failure, lineItemsById))
                 .toList();
         List<ValidationFailureDto> resolvedFailures = allFailures.stream()
                 .filter(ValidationFailure::isResolved)
-                .map(ValidationFailureDto::from)
+                .map(failure -> toFailureDto(failure, lineItemsById))
                 .toList();
 
         List<ExtractionEvidence> allEvidence = extractionEvidenceRepository.findByInvoiceId(invoiceId);
@@ -140,6 +145,18 @@ public class InvoiceService {
                 .lineItemEvidenceSummary(lineItemEvidenceSummary)
                 .relatedInvoiceId(relatedInvoiceId)
                 .build();
+    }
+
+    private ValidationFailureDto toFailureDto(ValidationFailure failure, Map<UUID, InvoiceLineItem> lineItemsById) {
+        ValidationFailureDto dto = ValidationFailureDto.from(failure);
+        if (failure.getScope() == ValidationScope.LINE_ITEM && failure.getLineItemId() != null) {
+            InvoiceLineItem item = lineItemsById.get(failure.getLineItemId());
+            if (item != null) {
+                dto.setLineDescription("Line " + item.getLineNumber()
+                        + (item.getDescription() != null ? " — " + item.getDescription() : ""));
+            }
+        }
+        return dto;
     }
 
     private int failurePriority(String rule) {

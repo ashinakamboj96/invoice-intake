@@ -16,6 +16,7 @@ import com.zamp.invoice.repository.InvoiceLineItemRepository;
 import com.zamp.invoice.repository.InvoiceRepository;
 import com.zamp.invoice.repository.ValidationFailureRepository;
 import com.zamp.invoice.validation.ValidationEngine;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** Write side of human review: applying a reviewer's resolutions to an invoice's failures and revalidating. See {@link #completeReview} for the core flow. */
+@Slf4j
 @Service
 public class ReviewService {
 
@@ -83,7 +85,17 @@ public class ReviewService {
             return duplicateConfirmedResponse;
         }
 
-        applyResolutions(invoice, unresolvedFailures, failuresById, resolutions);
+        Map<UUID, InvoiceLineItem> lineItemsById = invoiceLineItemRepository.findByInvoiceId(invoice.getId()).stream()
+                .collect(Collectors.toMap(InvoiceLineItem::getId, Function.identity()));
+        Set<InvoiceLineItem> touchedLineItems = new LinkedHashSet<>();
+
+        applyResolutions(invoice, unresolvedFailures, failuresById, lineItemsById, touchedLineItems, resolutions);
+        applyFieldCorrections(invoice, lineItemsById, touchedLineItems, request.getFieldCorrections());
+
+        validationFailureRepository.saveAll(unresolvedFailures);
+        if (!touchedLineItems.isEmpty()) {
+            invoiceLineItemRepository.saveAll(touchedLineItems);
+        }
         invoiceRepository.save(invoice);
 
         Set<String> skipRules = collectSkipRules(invoiceId, resolutions, failuresById);
@@ -153,25 +165,47 @@ public class ReviewService {
                 .build();
     }
 
-    /**
-     * Applies every resolution, then persists all touched failures and any corrected line items
-     * in two bulk {@code saveAll} calls rather than one write per resolution.
-     */
+    /** Applies every resolution; persistence is batched by the caller once both resolutions and field corrections are in. */
     private void applyResolutions(Invoice invoice,
                                    List<ValidationFailure> unresolvedFailures,
                                    Map<UUID, ValidationFailure> failuresById,
+                                   Map<UUID, InvoiceLineItem> lineItemsById,
+                                   Set<InvoiceLineItem> touchedLineItems,
                                    List<CompleteReviewRequest.FailureResolution> resolutions) {
-        Map<UUID, InvoiceLineItem> lineItemsById = invoiceLineItemRepository.findByInvoiceId(invoice.getId()).stream()
-                .collect(Collectors.toMap(InvoiceLineItem::getId, Function.identity()));
-        Set<InvoiceLineItem> touchedLineItems = new LinkedHashSet<>();
-
         for (CompleteReviewRequest.FailureResolution resolution : resolutions) {
             applyResolution(invoice, unresolvedFailures, failuresById, lineItemsById, touchedLineItems, resolution);
         }
+    }
 
-        validationFailureRepository.saveAll(unresolvedFailures);
-        if (!touchedLineItems.isEmpty()) {
-            invoiceLineItemRepository.saveAll(touchedLineItems);
+    /**
+     * Applies direct edits made to the extracted fields panel (not via a failure card's own
+     * correction input) — e.g. a reviewer types a corrected vendor name into the panel, then
+     * clicks "Approve" on that field's card rather than "Save". Best-effort: a correction with an
+     * unrecognised field name or an invalid value is logged and skipped rather than failing the
+     * whole review, since it's additive to the resolutions above, not required for them.
+     */
+    private void applyFieldCorrections(Invoice invoice,
+                                        Map<UUID, InvoiceLineItem> lineItemsById,
+                                        Set<InvoiceLineItem> touchedLineItems,
+                                        List<CompleteReviewRequest.FieldCorrection> corrections) {
+        if (corrections == null) {
+            return;
+        }
+        for (CompleteReviewRequest.FieldCorrection correction : corrections) {
+            try {
+                FieldName fieldName = FieldName.valueOf(correction.getFieldName());
+                if (correction.getLineItemId() == null) {
+                    applyInvoiceFieldCorrection(invoice, fieldName, correction.getNewValue());
+                } else {
+                    InvoiceLineItem item = lineItemsById.get(correction.getLineItemId());
+                    if (item != null) {
+                        applyLineItemCorrection(item, fieldName, correction.getNewValue());
+                        touchedLineItems.add(item);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Field correction failed for {}: {}", correction.getFieldName(), e.getMessage());
+            }
         }
     }
 

@@ -20,6 +20,9 @@ public class CompleteReviewRequest {
     @NotEmpty
     private List<@Valid FailureResolution> resolutions;
 
+    /** Direct edits to the extracted fields panel, independent of any failure-card resolution above. Optional — null/absent is treated as no edits. */
+    private List<@Valid FieldCorrection> fieldCorrections;
+
     /** How a reviewer resolved one {@code ValidationFailure}; {@code newValue} is required only when {@code action} is {@code CORRECTED}. */
     @Data
     @NoArgsConstructor
@@ -32,6 +35,21 @@ public class CompleteReviewRequest {
         @NotNull
         private ReviewActionType action;
 
+        private String newValue;
+    }
+
+    /** A raw edit to one field in the extracted fields panel; {@code lineItemId} is null for invoice-level fields. */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FieldCorrection {
+
+        @NotNull
+        private String fieldName;
+
+        private UUID lineItemId;
+
+        @NotNull
         private String newValue;
     }
 }

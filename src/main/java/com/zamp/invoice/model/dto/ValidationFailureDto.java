@@ -28,6 +28,8 @@ public class ValidationFailureDto {
     private boolean resolved;
     private ReviewActionType action;
     private String newValue;
+    /** "Line 3 — Widget A" for {@code LINE_ITEM}-scope failures; null otherwise. Populated by {@code InvoiceService}, which has the line items in hand — not derivable from the entity alone. */
+    private String lineDescription;
 
     /** Maps a {@code ValidationFailure} entity to its API projection. */
     public static ValidationFailureDto from(ValidationFailure failure) {

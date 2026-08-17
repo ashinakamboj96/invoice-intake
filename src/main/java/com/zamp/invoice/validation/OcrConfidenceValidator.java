@@ -14,9 +14,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /** Flags low-confidence and unmatched OCR evidence — the validator that turns {@code EvidenceMapper}'s output into reviewer-facing warnings. */
 @Component
@@ -36,8 +34,7 @@ public class OcrConfidenceValidator {
      *
      * @param invoice   the invoice being checked; only acted on when its extraction method is OCR
      * @param evidence  the OCR evidence rows collected for this invoice
-     * @param lineItems the invoice's line items, used only to name the line number in a
-     *                  line-item-scoped failure's message (e.g. "Line 3: ...")
+     * @param lineItems unused; kept so this method matches the shared validator call signature
      * @return one failure per low/missing-confidence evidence row; empty for non-OCR invoices
      *         or when every field met the threshold
      */
@@ -45,9 +42,6 @@ public class OcrConfidenceValidator {
         if (invoice.getExtractionMethod() != ExtractionMethod.OCR) {
             return List.of();
         }
-
-        Map<UUID, Integer> lineNumbersById = lineItems.stream()
-                .collect(Collectors.toMap(InvoiceLineItem::getId, InvoiceLineItem::getLineNumber));
 
         BigDecimal threshold = validationConfig.getOcrConfidenceThreshold();
         List<ValidationFailure> failures = new ArrayList<>();
@@ -62,19 +56,34 @@ public class OcrConfidenceValidator {
                 continue;
             }
 
-            Integer lineNumber = row.getLineItemId() == null ? null : lineNumbersById.get(row.getLineItemId());
-            String linePrefix = lineNumber == null ? "" : "Line " + lineNumber + ": ";
+            String label = toHumanLabel(row.getFieldName());
             if (confidence == null) {
                 failures.add(buildFailure(invoice, row, "OCR_SOURCE_NOT_FOUND",
-                        linePrefix + "We couldn't verify this value in the original document — please check it looks right."));
+                        label + " could not be located in the scanned document. Please verify this value is correct."));
             } else if (confidence.compareTo(threshold) < 0) {
-                String message = linePrefix + "Our reading of this value wasn't very confident (" + toPercent(confidence)
-                        + "%). Please check it against the original.";
+                String message = label + " was read with " + toPercent(confidence) + "% confidence (our threshold is "
+                        + toPercent(threshold) + "%). Please check this value against the original document and correct it if needed.";
                 failures.add(buildFailure(invoice, row, "LOW_OCR_CONFIDENCE", message));
             }
         }
 
         return failures;
+    }
+
+    private String toHumanLabel(FieldName fieldName) {
+        return switch (fieldName) {
+            case VENDOR_NAME -> "Vendor name";
+            case INVOICE_NUMBER -> "Invoice number";
+            case INVOICE_DATE -> "Invoice date";
+            case CURRENCY -> "Currency";
+            case SUBTOTAL_AMOUNT -> "Subtotal";
+            case TAX_AMOUNT -> "Tax amount";
+            case TOTAL_AMOUNT -> "Total amount";
+            case DESCRIPTION -> "Description";
+            case QUANTITY -> "Quantity";
+            case UNIT_PRICE -> "Unit price";
+            case AMOUNT -> "Line amount";
+        };
     }
 
     private String toPercent(BigDecimal fraction) {

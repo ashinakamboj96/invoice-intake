@@ -41,9 +41,7 @@ function wireUploadControls() {
     });
 
     fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            handleSelectedFile(fileInput.files[0]);
-        }
+        handleFiles(Array.from(fileInput.files));
         fileInput.value = '';
     });
 }
@@ -64,9 +62,10 @@ function setUploadLoading(loading) {
     }
 }
 
+// Uploads one file and returns its response, or null on failure (error already shown). Never
+// navigates itself — handleFiles uploads every selected file first, then reloads once, so a
+// multi-file selection doesn't have one file's success racing another's upload.
 async function uploadInvoice(file) {
-    setUploadLoading(true);
-
     const formData = new FormData();
     formData.append('file', file);
 
@@ -78,26 +77,39 @@ async function uploadInvoice(file) {
 
         if (!response.ok) {
             const err = await response.json();
-            setUploadLoading(false);
-            showUploadError(err.message || 'Upload failed');
-            return;
+            showUploadError(`"${file.name}": ${err.message || 'Upload failed'}`);
+            return null;
         }
 
-        const invoice = await response.json();
-        // Reload once, immediately, so the new row appears in the table as PROCESSING.
-        // From there the general row poller (below) picks it up like any other in-flight
-        // invoice — no further reloads, so it can't race with the user clicking elsewhere.
-        window.location.href = '/?uploaded=' + encodeURIComponent(invoice.id);
+        return await response.json();
     } catch (err) {
-        setUploadLoading(false);
-        showUploadError('Upload failed. Please try again.');
+        showUploadError(`"${file.name}": Upload failed. Please try again.`);
+        return null;
     }
 }
 
-// Polls every currently-PROCESSING row on the list page and updates it in place once its
-// status changes — covers invoices still processing from an earlier visit, not just one just
-// uploaded in this tab, and never reloads the page (a full-page reload here previously raced
-// with in-progress navigation, e.g. clicking "View" on another row).
+// Validates every selected file before uploading any of them, then uploads them all and
+// reloads once — the new rows show up in the "Currently processing" section from the fresh
+// page load, and pollProcessingInvoices (below) picks up from there.
+async function handleFiles(files) {
+    if (files.length === 0) {
+        return;
+    }
+
+    const oversized = files.filter((f) => f.size > MAX_UPLOAD_BYTES);
+    if (oversized.length > 0) {
+        showUploadError(`${oversized.map((f) => f.name).join(', ')} exceed the 10MB limit.`);
+        return;
+    }
+
+    setUploadLoading(true);
+    await Promise.allSettled(files.map(uploadInvoice));
+    window.location.reload();
+}
+
+// Polls every currently-PROCESSING row in the main table (only visible when explicitly filtered
+// to status=PROCESSING, since the list page otherwise excludes them) and updates it in place —
+// never reloads, so it can't race with in-progress navigation, e.g. clicking "View" on another row.
 (function initProcessingRowPoller() {
     const pendingIds = new Set(
         Array.from(document.querySelectorAll('tr[data-status="PROCESSING"]'))
@@ -126,42 +138,109 @@ async function uploadInvoice(file) {
     }, 3000);
 })();
 
-// Polls the "Currently processing" section's own items (separate from the main table, which no
-// longer renders PROCESSING invoices by default). On completion, removes the item from the list
-// rather than reloading — a completed invoice may not even match the main table's current filters,
-// so a forced reload could just as easily surprise the user as help them; a dismissible banner lets
-// them refresh on their own terms instead.
-(function initProcessingSectionPoller() {
-    const items = document.querySelectorAll('#processing-list > li[data-invoice-id]');
-    if (items.length === 0) {
+// Polls the "Currently processing" widget's own items. Once every one of them has left
+// PROCESSING, stashes a summary of the outcome and reloads automatically — no "refresh to
+// view" prompt to click through. checkUploadSummary() (below) reads that stash back out after
+// the reload and renders it as a banner.
+function pollProcessingInvoices() {
+    const ids = Array.from(document.querySelectorAll('[data-processing-id]'))
+        .map((el) => el.dataset.processingId);
+    if (ids.length === 0) {
         return;
     }
-    const pendingIds = new Set(Array.from(items).map((li) => li.dataset.invoiceId));
 
     const interval = setInterval(async () => {
-        for (const id of Array.from(pendingIds)) {
-            try {
-                const response = await fetch(`/api/invoices/${id}`);
-                const invoice = await response.json();
-                if (invoice.status !== 'PROCESSING') {
-                    pendingIds.delete(id);
-                    const li = document.getElementById('processing-item-' + id);
-                    li?.remove();
-                    document.getElementById('processing-done-banner')?.classList.remove('d-none');
-                    const countEl = document.getElementById('processing-count');
-                    if (countEl) {
-                        countEl.textContent = String(document.querySelectorAll('#processing-list > li').length);
-                    }
-                }
-            } catch (err) {
-                // Transient network error — leave it pending and retry next tick.
+        try {
+            const results = await Promise.all(
+                ids.map((id) =>
+                    fetch(`/api/invoices/${id}`)
+                        .then((r) => r.json())
+                        .catch(() => ({ status: 'PROCESSING' }))
+                )
+            );
+
+            const done = results.filter((i) => i.status !== 'PROCESSING');
+            if (done.length === ids.length) {
+                clearInterval(interval);
+
+                const needsReview = done.filter((i) => i.status === 'NEEDS_REVIEW');
+                const accepted = done.filter((i) => i.status === 'ACCEPTED');
+                const failed = done.filter((i) => i.status === 'FAILED');
+
+                sessionStorage.setItem('uploadSummary', JSON.stringify({
+                    accepted: accepted.length,
+                    failed: failed.length,
+                    needsReview: needsReview.map((i) => ({
+                        id: i.id,
+                        vendorName: i.vendorName || i.originalFilename,
+                        invoiceNumber: i.invoiceNumber
+                    }))
+                }));
+
+                window.location.reload();
             }
-        }
-        if (pendingIds.size === 0) {
-            clearInterval(interval);
+        } catch (e) {
+            // Transient network error — keep polling silently.
         }
     }, 3000);
-})();
+}
+
+pollProcessingInvoices();
+
+// Renders a dismissible summary banner from the previous poll's outcome, if any — reads and
+// clears sessionStorage so it only shows once, right after the reload that follows completion.
+function checkUploadSummary() {
+    const raw = sessionStorage.getItem('uploadSummary');
+    if (!raw) {
+        return;
+    }
+    sessionStorage.removeItem('uploadSummary');
+
+    const s = JSON.parse(raw);
+    const total = s.accepted + s.needsReview.length + s.failed;
+    if (total === 0) {
+        return;
+    }
+
+    let html = `<div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+        <strong>Processing complete</strong> —
+        ${total} invoice${total > 1 ? 's' : ''} processed.<br>`;
+
+    if (s.accepted > 0) {
+        html += `<span class="me-3 text-success">
+            <i class="bi bi-check-circle-fill me-1"></i>
+            ${s.accepted} accepted
+        </span>`;
+    }
+
+    if (s.needsReview.length > 0) {
+        const links = s.needsReview.map((i) => {
+            const label = i.invoiceNumber
+                ? `${i.vendorName} (${i.invoiceNumber})`
+                : (i.vendorName || 'Unknown');
+            return `<a href="/invoices/${i.id}" class="alert-link fw-semibold">${label}</a>`;
+        }).join(', ');
+        html += `<span class="me-3 text-warning">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            ${s.needsReview.length} need${s.needsReview.length === 1 ? 's' : ''} review:
+            ${links}
+        </span>`;
+    }
+
+    if (s.failed > 0) {
+        html += `<span class="text-danger">
+            <i class="bi bi-x-circle-fill me-1"></i>
+            ${s.failed} failed
+        </span>`;
+    }
+
+    html += `<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+
+    const container = document.getElementById('invoice-list-container');
+    container?.insertAdjacentHTML('beforebegin', html);
+}
+
+checkUploadSummary();
 
 function updateInvoiceRow(invoiceId, invoice) {
     const row = document.getElementById('invoice-row-' + invoiceId);
@@ -219,17 +298,6 @@ function formatAmount(amount) {
     return Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function handleSelectedFile(file) {
-    if (!file) {
-        return;
-    }
-    if (file.size > MAX_UPLOAD_BYTES) {
-        showUploadError(`"${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB — files must be 10MB or smaller.`);
-        return;
-    }
-    uploadInvoice(file);
-}
-
 (function initUploadArea() {
     const dropzone = document.getElementById('dropzone');
     if (!dropzone) {
@@ -255,10 +323,7 @@ function handleSelectedFile(file) {
     });
 
     dropzone.addEventListener('drop', (e) => {
-        const file = e.dataTransfer.files[0];
-        if (file) {
-            handleSelectedFile(file);
-        }
+        handleFiles(Array.from(e.dataTransfer.files));
     });
 })();
 
@@ -370,11 +435,39 @@ function checkAllResolved() {
     }
 }
 
+// Collects direct edits to the extracted fields panel that weren't made via a failure card's
+// own correction input — e.g. typing a corrected vendor name straight into the panel, then
+// clicking "Yes, looks right" on that field's card rather than "Save". Compares each input's
+// current value against the value it was rendered with (data-original-value) and only sends
+// what actually changed.
+function collectFieldCorrections() {
+    const corrections = [];
+
+    document.querySelectorAll('.invoice-field[data-field]').forEach((input) => {
+        const orig = input.dataset.originalValue ?? '';
+        const curr = input.value?.trim() ?? '';
+        if (curr !== orig && curr !== '') {
+            corrections.push({ fieldName: input.dataset.field, lineItemId: null, newValue: curr });
+        }
+    });
+
+    document.querySelectorAll('.line-item-field[data-field]').forEach((input) => {
+        const orig = input.dataset.originalValue ?? '';
+        const curr = input.value?.trim() ?? '';
+        if (curr !== orig && curr !== '') {
+            corrections.push({ fieldName: input.dataset.field, lineItemId: input.dataset.lineItemId, newValue: curr });
+        }
+    });
+
+    return corrections;
+}
+
 document.getElementById('complete-review-btn')
     ?.addEventListener('click', async () => {
         const invoiceId = document.getElementById('invoice-id')?.value;
         const payload = {
-            resolutions: Object.values(resolutions)
+            resolutions: Object.values(resolutions),
+            fieldCorrections: collectFieldCorrections()
         };
 
         const submitBtn = document.getElementById('complete-review-btn');

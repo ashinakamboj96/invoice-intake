@@ -31,10 +31,11 @@ public class LineItemValidator {
 
         for (InvoiceLineItem lineItem : lineItems) {
             BigDecimal amount = lineItem.getAmount();
+            String description = lineItem.getDescription() != null ? lineItem.getDescription() : "no description";
 
             if (amount == null) {
                 failures.add(buildFailure(invoice, lineItem, "MISSING_LINE_ITEM_AMOUNT",
-                        "Line item " + lineItem.getLineNumber() + " has no extracted amount."));
+                        "Line " + lineItem.getLineNumber() + " (" + description + "): amount is missing. Please enter it."));
                 continue;
             }
 
@@ -43,9 +44,10 @@ public class LineItemValidator {
             if (quantity != null && unitPrice != null) {
                 BigDecimal expected = quantity.multiply(unitPrice);
                 if (expected.subtract(amount).abs().compareTo(TOLERANCE) > 0) {
-                    String message = "Line " + lineItem.getLineNumber() + ": " + quantity.toPlainString() + " × "
-                            + unitPrice.toPlainString() + " = " + expected.toPlainString()
-                            + ", but this line shows " + amount.toPlainString() + ". One of these values may be wrong.";
+                    String message = "Line " + lineItem.getLineNumber() + " (" + description + "): "
+                            + quantity.toPlainString() + " × " + unitPrice.toPlainString() + " should equal "
+                            + expected.toPlainString() + ", but this line shows " + amount.toPlainString()
+                            + ". Please check the quantity, unit price, or amount.";
                     failures.add(buildFailure(invoice, lineItem, "LINE_TOTAL_MISMATCH", message));
                 }
             }

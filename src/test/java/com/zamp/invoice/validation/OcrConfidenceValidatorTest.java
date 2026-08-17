@@ -61,7 +61,7 @@ class OcrConfidenceValidatorTest {
 
         assertThat(failures).hasSize(1);
         assertThat(failures.get(0).getRule()).isEqualTo("OCR_SOURCE_NOT_FOUND");
-        assertThat(failures.get(0).getMessage()).contains("couldn't verify this value");
+        assertThat(failures.get(0).getMessage()).contains("Vendor name").contains("could not be located");
     }
 
     @Test

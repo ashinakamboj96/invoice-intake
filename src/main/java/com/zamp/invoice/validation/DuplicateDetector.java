@@ -43,6 +43,16 @@ public class DuplicateDetector {
      *         found; empty otherwise
      */
     public List<ValidationFailure> detect(Invoice invoice) {
+        // Once a human has made ANY duplicate decision on this invoice — confirmed or dismissed —
+        // that decision is permanent for this invoice. Without this, revalidation after a
+        // DUPLICATE_CONFIRMED (which doesn't otherwise short-circuit re-detection) or a dismissal
+        // against one candidate could still re-flag against a different one.
+        boolean alreadyDecided = validationFailureRepository.existsByInvoiceIdAndActionIn(
+                invoice.getId(), List.of(ReviewActionType.DUPLICATE_DISMISSED, ReviewActionType.DUPLICATE_CONFIRMED));
+        if (alreadyDecided) {
+            return List.of();
+        }
+
         if (invoice.getVendorName() == null || invoice.getInvoiceNumber() == null) {
             return List.of();
         }
@@ -75,8 +85,8 @@ public class DuplicateDetector {
     }
 
     private ValidationFailure buildFailure(Invoice invoice, Invoice candidate) {
-        String message = "An invoice from " + invoice.getVendorName() + " with number " + invoice.getInvoiceNumber()
-                + " already exists. Is this a re-upload or a new invoice?";
+        String message = "Invoice " + invoice.getInvoiceNumber() + " from " + invoice.getVendorName()
+                + " already exists in the system. Is this a re-upload or a different invoice?";
         return ValidationFailure.builder()
                 .id(UUID.randomUUID())
                 .invoice(invoice)

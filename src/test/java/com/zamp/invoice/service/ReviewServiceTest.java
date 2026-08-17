@@ -51,7 +51,7 @@ class ReviewServiceTest {
     private ReviewService reviewService;
 
     private CompleteReviewRequest requestWith(CompleteReviewRequest.FailureResolution... resolutions) {
-        return new CompleteReviewRequest(List.of(resolutions));
+        return new CompleteReviewRequest(List.of(resolutions), null);
     }
 
     @Test

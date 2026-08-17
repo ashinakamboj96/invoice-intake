@@ -34,23 +34,23 @@ public class FieldValidator {
 
         if (invoice.getVendorName() == null || invoice.getVendorName().isBlank()) {
             failures.add(buildFailure(invoice, FieldName.VENDOR_NAME, "MISSING_REQUIRED_FIELD",
-                    "Vendor name could not be extracted from the document."));
+                    "Vendor name is missing — it could not be extracted from this document. Please enter it manually."));
         }
 
         if (invoice.getTotalAmount() == null) {
             failures.add(buildFailure(invoice, FieldName.TOTAL_AMOUNT, "MISSING_REQUIRED_FIELD",
-                    "Total amount could not be extracted from the document."));
+                    "Total amount is missing — it could not be extracted from this document. Please enter it manually."));
         }
 
         if (invoice.getInvoiceDate() == null) {
             failures.add(buildFailure(invoice, FieldName.INVOICE_DATE, "INVALID_DATE",
-                    "Invoice date could not be extracted or is not a valid date."));
+                    "Invoice date is missing or could not be read as a valid date. Please enter it manually (YYYY-MM-DD)."));
         }
 
         String currency = invoice.getCurrency();
         if (currency != null && !VALID_CURRENCY_CODES.contains(currency.toUpperCase())) {
             failures.add(buildFailure(invoice, FieldName.CURRENCY, "INVALID_CURRENCY",
-                    "Extracted currency '" + currency + "' is not a recognised currency code."));
+                    "'" + currency + "' is not a recognised currency code. Please correct it (e.g. INR, USD, EUR)."));
         }
 
         return failures;

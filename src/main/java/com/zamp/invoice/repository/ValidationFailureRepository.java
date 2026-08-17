@@ -21,6 +21,9 @@ public interface ValidationFailureRepository extends JpaRepository<ValidationFai
     /** Used to avoid re-flagging a duplicate pair the reviewer already dismissed for this invoice. */
     boolean existsByInvoiceIdAndRelatedInvoiceIdAndAction(UUID invoiceId, UUID relatedInvoiceId, ReviewActionType action);
 
+    /** Used to skip duplicate detection entirely once a human has made any duplicate decision on this invoice. */
+    boolean existsByInvoiceIdAndActionIn(UUID invoiceId, List<ReviewActionType> actions);
+
     int countByInvoiceIdAndResolvedFalse(UUID invoiceId);
 
     /** Bulk form of {@link #countByInvoiceIdAndResolvedFalse}, for building a list page without one count query per row. */

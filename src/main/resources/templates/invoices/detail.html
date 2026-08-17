@@ -185,6 +185,7 @@
                                            id="field-VENDOR_NAME"
                                            data-field="VENDOR_NAME"
                                            th:value="${invoice.vendorName}"
+                                           th:attr="data-original-value=${invoice.vendorName}"
                                            th:classappend="${invoice.evidenceSummary['VENDOR_NAME'] != null and invoice.evidenceSummary['VENDOR_NAME'] < 0.90} ? 'field-low-confidence' : ''"
                                            th:title="${invoice.evidenceSummary['VENDOR_NAME'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['VENDOR_NAME'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
                                     <div class="invalid-feedback"></div>
@@ -196,6 +197,7 @@
                                            id="field-INVOICE_NUMBER"
                                            data-field="INVOICE_NUMBER"
                                            th:value="${invoice.invoiceNumber}"
+                                           th:attr="data-original-value=${invoice.invoiceNumber}"
                                            th:classappend="${invoice.evidenceSummary['INVOICE_NUMBER'] != null and invoice.evidenceSummary['INVOICE_NUMBER'] < 0.90} ? 'field-low-confidence' : ''"
                                            th:title="${invoice.evidenceSummary['INVOICE_NUMBER'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_NUMBER'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
                                     <div class="invalid-feedback"></div>
@@ -207,6 +209,7 @@
                                            id="field-INVOICE_DATE"
                                            data-field="INVOICE_DATE"
                                            th:value="${invoice.invoiceDate}"
+                                           th:attr="data-original-value=${invoice.invoiceDate}"
                                            th:classappend="${invoice.evidenceSummary['INVOICE_DATE'] != null and invoice.evidenceSummary['INVOICE_DATE'] < 0.90} ? 'field-low-confidence' : ''"
                                            th:title="${invoice.evidenceSummary['INVOICE_DATE'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['INVOICE_DATE'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
                                     <div class="invalid-feedback"></div>
@@ -218,6 +221,7 @@
                                            id="field-CURRENCY"
                                            data-field="CURRENCY"
                                            th:value="${invoice.currency}"
+                                           th:attr="data-original-value=${invoice.currency}"
                                            th:classappend="${invoice.evidenceSummary['CURRENCY'] != null and invoice.evidenceSummary['CURRENCY'] < 0.90} ? 'field-low-confidence' : ''"
                                            th:title="${invoice.evidenceSummary['CURRENCY'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['CURRENCY'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
                                     <div class="invalid-feedback"></div>
@@ -229,6 +233,7 @@
                                            id="field-SUBTOTAL_AMOUNT"
                                            data-field="SUBTOTAL_AMOUNT"
                                            th:value="${invoice.subtotalAmount}"
+                                           th:attr="data-original-value=${invoice.subtotalAmount}"
                                            th:classappend="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null and invoice.evidenceSummary['SUBTOTAL_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''"
                                            th:title="${invoice.evidenceSummary['SUBTOTAL_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['SUBTOTAL_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
                                     <div class="invalid-feedback"></div>
@@ -240,6 +245,7 @@
                                            id="field-TAX_AMOUNT"
                                            data-field="TAX_AMOUNT"
                                            th:value="${invoice.taxAmount}"
+                                           th:attr="data-original-value=${invoice.taxAmount}"
                                            th:classappend="${invoice.evidenceSummary['TAX_AMOUNT'] != null and invoice.evidenceSummary['TAX_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''"
                                            th:title="${invoice.evidenceSummary['TAX_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['TAX_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
                                     <div class="invalid-feedback"></div>
@@ -251,6 +257,7 @@
                                            id="field-TOTAL_AMOUNT"
                                            data-field="TOTAL_AMOUNT"
                                            th:value="${invoice.totalAmount}"
+                                           th:attr="data-original-value=${invoice.totalAmount}"
                                            th:classappend="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null and invoice.evidenceSummary['TOTAL_AMOUNT'] < 0.90} ? 'field-low-confidence' : ''"
                                            th:title="${invoice.evidenceSummary['TOTAL_AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(invoice.evidenceSummary['TOTAL_AMOUNT'] * 100, 1, 1)} + '%') : 'PDF text extraction — no OCR confidence'">
                                     <div class="invalid-feedback"></div>
@@ -280,25 +287,25 @@
                                     <td th:text="${item.lineNumber}">1</td>
                                     <td><input type="text" class="form-control form-control-sm line-item-field"
                                                th:value="${item.description}"
-                                               th:attr="data-line-item-id=${item.id}"
+                                               th:attr="data-line-item-id=${item.id},data-original-value=${item.description}"
                                                data-field="DESCRIPTION"
                                                th:classappend="${itemEvidence != null and itemEvidence['DESCRIPTION'] != null and itemEvidence['DESCRIPTION'] < 0.90} ? 'field-low-confidence' : ''"
                                                th:title="${itemEvidence != null and itemEvidence['DESCRIPTION'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(itemEvidence['DESCRIPTION'] * 100, 1, 1)} + '%') : 'No OCR confidence for this field'"></td>
                                     <td><input type="text" class="form-control form-control-sm line-item-field"
                                                th:value="${item.quantity}"
-                                               th:attr="data-line-item-id=${item.id}"
+                                               th:attr="data-line-item-id=${item.id},data-original-value=${item.quantity}"
                                                data-field="QUANTITY"
                                                th:classappend="${itemEvidence != null and itemEvidence['QUANTITY'] != null and itemEvidence['QUANTITY'] < 0.90} ? 'field-low-confidence' : ''"
                                                th:title="${itemEvidence != null and itemEvidence['QUANTITY'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(itemEvidence['QUANTITY'] * 100, 1, 1)} + '%') : 'No OCR confidence for this field'"></td>
                                     <td><input type="text" class="form-control form-control-sm line-item-field"
                                                th:value="${item.unitPrice}"
-                                               th:attr="data-line-item-id=${item.id}"
+                                               th:attr="data-line-item-id=${item.id},data-original-value=${item.unitPrice}"
                                                data-field="UNIT_PRICE"
                                                th:classappend="${itemEvidence != null and itemEvidence['UNIT_PRICE'] != null and itemEvidence['UNIT_PRICE'] < 0.90} ? 'field-low-confidence' : ''"
                                                th:title="${itemEvidence != null and itemEvidence['UNIT_PRICE'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(itemEvidence['UNIT_PRICE'] * 100, 1, 1)} + '%') : 'No OCR confidence for this field'"></td>
                                     <td><input type="text" class="form-control form-control-sm line-item-field"
                                                th:value="${item.amount}"
-                                               th:attr="data-line-item-id=${item.id}"
+                                               th:attr="data-line-item-id=${item.id},data-original-value=${item.amount}"
                                                data-field="AMOUNT"
                                                th:classappend="${itemEvidence != null and itemEvidence['AMOUNT'] != null and itemEvidence['AMOUNT'] < 0.90} ? 'field-low-confidence' : ''"
                                                th:title="${itemEvidence != null and itemEvidence['AMOUNT'] != null} ? ('OCR confidence: ' + ${#numbers.formatDecimal(itemEvidence['AMOUNT'] * 100, 1, 1)} + '%') : 'No OCR confidence for this field'"></td>
@@ -364,7 +371,9 @@
 
                             <div class="d-flex justify-content-between align-items-start mb-1">
                                 <span class="fw-semibold"
-                                      th:text="${failure.fieldName != null} ? ${#strings.replace(failure.fieldName.name(), '_', ' ')} : (${failure.scope.name() == 'LINE_ITEM'} ? 'Line item' : ${#strings.replace(failure.rule, '_', ' ')})">
+                                      th:text="${failure.lineDescription != null} ? ${failure.lineDescription} :
+                                               (${failure.fieldName != null} ? ${#strings.replace(failure.fieldName.name(), '_', ' ')} :
+                                               (${failure.scope.name() == 'LINE_ITEM'} ? 'Line item' : ${#strings.replace(failure.rule, '_', ' ')}))">
                                     TOTAL AMOUNT
                                 </span>
                                 <span class="badge bg-light text-muted border small" th:text="${failure.rule}">LOW_OCR_CONFIDENCE</span>
