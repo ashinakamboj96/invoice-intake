@@ -164,26 +164,6 @@ once (`DUPLICATE_DISMISSED`) isn't asked about that same pair again.
 
 ---
 
-## Human review: approved rules skipped across sessions
-
-**Decision:** When a human approves a validation failure (e.g.
-accepts a known subtotal mismatch), that rule is suppressed in
-all future revalidation passes for that invoice — not just the
-current session.
-
-**Reasoning:** discovered during UI testing that approving
-LOW_OCR_CONFIDENCE in one review round and OCR_SOURCE_NOT_FOUND in
-the next caused an infinite oscillating loop — each round's
-revalidation had no memory of what was approved in a prior round,
-so it could resurrect a rule the reviewer had already signed off
-on, and the invoice could never reach ACCEPTED. Fixed by reading
-previously-approved rules from the database
-(`findByInvoiceIdAndAction`) before revalidation and unioning them
-with the current round's approvals into the skip-set. APPROVED is
-a durable human decision, not a session-scoped hint.
-
----
-
 ## Database: single schema, four tables
 
 **Decision:** invoice, invoice_line_item, extraction_evidence,
@@ -310,21 +290,6 @@ the pattern already used everywhere else in the review screen.
 - **Vendor-specific parsers:** cross-extraction agreement
   via normalized text matching is sufficient and avoids
   maintaining a parser per vendor layout.
-
----
-
-## UX: Failure cards ask one question, not show mechanism
-
-**Decision:** Each failure card asks "Is this correct?" with two
-answers: approve or correct. Removed scope badges (INVOICE_FIELD,
-LINE_ITEM), "Go to field" buttons, and technical rule names from
-the visible UI.
-
-**Reasoning:** A finance user doesn't know what "OCR source word
-could not be located" means. Showing mechanism instead of guidance
-creates confusion. The rule name is still available as a badge
-(small, right-aligned) for engineers who need it, but it's not
-the primary information.
 
 ---
 

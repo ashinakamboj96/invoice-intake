@@ -174,7 +174,7 @@
                 <div class="col-lg-7">
 
                     <!-- Extracted Fields Panel — a yellow border means low OCR confidence; hover for the exact number. -->
-                    <div class="card mb-3">
+                    <div class="card mb-3" id="extracted-fields-panel">
                         <div class="card-header fw-semibold">Extracted Fields</div>
                         <div class="card-body">
                             <div class="row g-2">
@@ -395,7 +395,9 @@
                                         title="The values are correct as extracted">
                                     Yes, looks right
                                 </button>
-                                <span class="text-muted small">or fix the values in the fields above, then</span>
+                                <span class="text-muted small">or</span>
+                                <a href="#extracted-fields-panel" class="small scroll-to-section-link" data-target="extracted-fields-panel">fix the values in the fields panel ↑</a>
+                                <span class="text-muted small">, then</span>
                                 <button class="btn btn-sm btn-outline-success resolve-btn ive-fixed-it-btn"
                                         th:attr="data-failure-id=${failure.id}"
                                         data-scope="INVOICE"
@@ -416,7 +418,9 @@
                                         title="The line item values are correct as extracted">
                                     Yes, looks right
                                 </button>
-                                <span class="text-muted small">or fix quantity, unit price, or amount in the line item above, then</span>
+                                <span class="text-muted small">or</span>
+                                <a href="#" class="small scroll-to-line-link" th:attr="data-line-item-id=${failure.lineItemId}">fix this line item ↑</a>
+                                <span class="text-muted small">, then</span>
                                 <button class="btn btn-sm btn-outline-success resolve-btn ive-fixed-it-btn"
                                         th:attr="data-failure-id=${failure.id},data-line-item-id=${failure.lineItemId}"
                                         data-scope="LINE_ITEM"

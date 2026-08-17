@@ -407,6 +407,51 @@ function wireFixedItButtons() {
 
 wireFixedItButtons();
 
+// Scroll targets for the "fix the values in the fields panel ↑" / "fix this line item ↑" links
+// on multi-field failure cards — replaces vague "above" text with something that actually takes
+// the reviewer there and highlights what to look at.
+function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) {
+        return;
+    }
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.style.transition = 'box-shadow 0.3s ease';
+    el.style.boxShadow = '0 0 0 2px #ffc107';
+    setTimeout(() => {
+        el.style.boxShadow = '';
+    }, 2000);
+}
+
+function scrollToLineItem(lineItemId) {
+    const row = document.getElementById('line-item-' + lineItemId);
+    if (!row) {
+        return;
+    }
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.querySelectorAll('input').forEach((inp) => {
+        inp.classList.add('border-warning', 'border-2');
+    });
+    setTimeout(() => {
+        row.querySelectorAll('input').forEach((inp) =>
+            inp.classList.remove('border-warning', 'border-2'));
+    }, 2000);
+}
+
+document.querySelectorAll('.scroll-to-section-link').forEach((link) => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        scrollToSection(link.dataset.target);
+    });
+});
+
+document.querySelectorAll('.scroll-to-line-link').forEach((link) => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        scrollToLineItem(link.dataset.lineItemId);
+    });
+});
+
 function recordResolution(failureId, action, fieldName, lineItemId) {
     // Every card's correction, invoice-field or line-item, now comes from its own inline input —
     // the backend resolves which field a fieldless failure (e.g. LINE_TOTAL_MISMATCH) implies.
